@@ -1,0 +1,29 @@
+{
+  "name": "mail",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.4.1",
+    "@tiptap/extension-color": "^2.0.0-beta.8",
+    "@tiptap/extension-paragraph": "^2.0.0-beta.22",
+    "@tiptap/extension-text-style": "^2.0.0-beta.22",
+    "@tiptap/starter-kit": "^2.0.0-beta.140",
+    "@tiptap/vue-3": "^2.0.0-beta.80",
+    "autoprefixer": "^10.4.0",
+    "idb": "^6.1.5",
+    "mitt": "^3.0.0",
+    "postcss": "^8.3.11",
+    "tailwindcss": "^2.2.19",
+    "tailwindcss-children": "^2.1.0",
+    "vue": "^3.2.16",
+    "vue-inline-svg": "^3.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.9.3",
+    "vite": "^2.6.4"
+  }
+}
