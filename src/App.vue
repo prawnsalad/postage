@@ -2,9 +2,8 @@
 
 import { ref, reactive } from 'vue'
 
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup
-import Folders from './components/Folders.vue'
+import Account from '@/services/account';
+import LabelList from './components/LabelList.vue'
 import Messages from './components/Messages.vue'
 import MessagePreview from './components/MessagePreview.vue'
 import ComposeMail from './components/Compose.vue'
@@ -12,23 +11,24 @@ import ComposeMail from './components/Compose.vue'
 const layout = ref('splitv'); // splith, splitv, splitnone
 const avialableLayouts = ['splith', 'splitv', 'splitnone'];
 
-const folders = ref([
-  { name: 'Inbox' },
-  { name: 'Drafts' },
-  { name: 'Sent' },
-  { name: 'Spam' },
-  { name: 'Deleted' },
-]);
-
+const labels = ref([]);
 
 const state = reactive({
-  activeFolder: folders.value[0],
+  activeLabel: labels.value[0],
   activeMessage: null,
 });
 
-
 const showNewMail = ref(false);
 
+// When stuff updates in our account (labels, account config, user info, etc), update our states
+const account = new Account();
+account.getLabels().then(newLabels => {
+  labels.value = newLabels;
+
+  if (!state.activeLabel) {
+    state.activeLabel = labels.value[0];
+  }
+});
 </script>
 
 <template>
@@ -37,7 +37,7 @@ const showNewMail = ref(false);
   </div>
 
   <div class="header-toolbar pl-4 border-b border-neutral-200">
-    <span class="inline-block text-3xl w-32">{{state.activeFolder?.name}}</span>
+    <span class="inline-block text-3xl w-32 min-w-max">{{state.activeLabel?.name}}</span>
     <input
       type="text"
       class="
@@ -63,12 +63,12 @@ const showNewMail = ref(false);
 
   <div class="sidebar px-4 pt-4 bg-neutral-100">
     <button class="w-full py-4 mb-8 bg-primary-400" @click="showNewMail=true">New Message</button>
-    <Folders @folder:selected="state.activeFolder=$event" :folders="folders" :active-folder="state.activeFolder"></Folders>
+    <label-list @label:selected="state.activeLabel=$event" :labels="labels" :active-label="state.activeLabel"></label-list>
   </div>
 
   <div class="mail-container" :class="[state.activeMessage ? layout : '']">
-    <messages @message:selected="state.activeMessage=$event" />
-    <message-preview v-if="state.activeMessage" :message="state.activeMessage" />
+    <messages @message:selected="state.activeMessage=$event" :active-label="state.activeLabel"/>
+    <message-preview v-if="state.activeMessage" :message="state.activeMessage" @close="state.activeMessage=null" />
   </div>
   
   <compose-mail

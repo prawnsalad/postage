@@ -2,9 +2,9 @@
 import { ref, reactive } from 'vue';
 import { getMessages } from '@/services/MessageLoader';
 
-defineProps({
-  msg: String
-})
+const props = defineProps({
+  activeLabel: Object,
+});
 
 
 
@@ -30,6 +30,12 @@ res.promises.forEach(async p => {
 const options = reactive({
     avatars: true,
 });
+
+// Only show the labels for the non-active label on messages in the list
+function filteredLabels(labels) {
+    let activeLabelName = props.activeLabel?.name.toLowerCase();
+    return labels.filter(l => l.toLowerCase() !== activeLabelName);
+}
 
 </script>
 
@@ -64,8 +70,11 @@ const options = reactive({
                         <span class="font-bold">{{m.src.fromName || m.src.fromEmail}}</span>
                         <div class="inline-block ml-4 text-sm">
                             <span class="star inline-block"></span>
-                            <span class="ml-2 p-1 bg-info-200 rounded">some label</span>
-                            <span class="ml-2 p-1 bg-info-200 rounded">personal</span>
+                            <span
+                                v-for="l in filteredLabels(m.src.labels || [])"
+                                :key="l"
+                                class="ml-2 p-1 bg-neutral-100 rounded"
+                            >{{l}}</span>
                         </div>
                         <span class="text-sm float-right text-neutral-400">00:00:00</span>
                     </div>

@@ -39,6 +39,7 @@ export default class MessageLoaderIndexdb {
                     fromName: 'Some name',
                     to: 'you@domain.com',
                     topic: 'RE: RE: FW: help pls',
+                    labels: [Math.random() * 10 > 5 ? 'inbox' : 'spam'],
                 }
             );
         }
