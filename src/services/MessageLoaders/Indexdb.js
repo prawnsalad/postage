@@ -27,6 +27,7 @@ export default class MessageLoaderIndexdb {
     }
 
     async addTestmessages() {
+        let labels = [1,2,3,4,5,6,7];
         let messages = [];
         for (let i=0; i<100; i++) {
             messages.push(
@@ -39,7 +40,9 @@ export default class MessageLoaderIndexdb {
                     fromName: 'Some name',
                     to: 'you@domain.com',
                     topic: 'RE: RE: FW: help pls',
-                    labels: [Math.random() * 10 > 5 ? 'inbox' : 'spam'],
+                    labels: [
+                        labels[Math.floor(Math.random()*labels.length)],
+                    ],
                 }
             );
         }

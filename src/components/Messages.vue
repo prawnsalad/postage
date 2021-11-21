@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue';
 import { getMessages } from '@/services/MessageLoader';
 
 const props = defineProps({
+  labels: Object,
   activeLabel: Object,
 });
 
@@ -32,9 +33,32 @@ const options = reactive({
 });
 
 // Only show the labels for the non-active label on messages in the list
-function filteredLabels(labels) {
+function filteredLabels(msgLabels) {
+    let labelsMap = {};
+    props.labels.forEach(l => labelsMap[l.id] = l);
+
     let activeLabelName = props.activeLabel?.name.toLowerCase();
-    return labels.filter(l => l.toLowerCase() !== activeLabelName);
+
+    let ret = [];
+    for (let labelId of msgLabels) {
+        let label = labelsMap[labelId];
+        // The label might not exist if it's been deleted
+        if (!label) {
+            continue;
+        }
+
+        if (label.name.toLowerCase() !== activeLabelName) {
+            continue;
+        }
+
+        if (!labelsMap[label.id]) {
+            continue;
+        }
+
+        ret.push(label);
+    }
+
+    return ret;
 }
 
 </script>
@@ -72,9 +96,9 @@ function filteredLabels(labels) {
                             <span class="star inline-block"></span>
                             <span
                                 v-for="l in filteredLabels(m.src.labels || [])"
-                                :key="l"
+                                :key="l.id"
                                 class="ml-2 p-1 bg-neutral-100 rounded"
-                            >{{l}}</span>
+                            >{{l.name}}</span>
                         </div>
                     </div>
                     <div class="topic whitespace-nowrap">{{m.src.topic}}</div>

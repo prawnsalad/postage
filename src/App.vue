@@ -117,7 +117,7 @@ function stopResizing() {
     :class="[state.activeMessage ? userSettings.ui.mailLayout : '']"
     :style="{'--messagelist-size': userSettings.ui.maillistSize + 'px'}"
   >
-    <messages @message:selected="state.activeMessage=$event" :active-label="state.activeLabel"/>
+    <messages @message:selected="state.activeMessage=$event" :labels="labels" :active-label="state.activeLabel"/>
     <div
       v-if="state.activeMessage"
       ref="elResizer"
