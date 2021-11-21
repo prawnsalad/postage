@@ -65,7 +65,7 @@ function filteredLabels(labels) {
                 <div v-if="options.avatars" class="avatar flex items-center justify-center">
                     <div class="avatar-content">Ab</div>
                 </div>
-                <div class="flex-grow">
+                <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
                     <div class="info-top">
                         <span class="font-bold">{{m.src.fromName || m.src.fromEmail}}</span>
                         <div class="inline-block ml-4 text-sm">
@@ -76,9 +76,12 @@ function filteredLabels(labels) {
                                 class="ml-2 p-1 bg-neutral-100 rounded"
                             >{{l}}</span>
                         </div>
-                        <span class="text-sm float-right text-neutral-400">00:00:00</span>
                     </div>
-                    <div class="topic">{{m.src.topic}}</div>
+                    <div class="topic whitespace-nowrap">{{m.src.topic}}</div>
+                </div>
+
+                <div>
+                    <span class="text-sm float-right text-neutral-400">00:00:00</span>
                 </div>
             </template>
             <template v-else>

@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 
 import Account from '@/services/account';
 import LabelList from './components/LabelList.vue'
@@ -8,13 +8,19 @@ import Messages from './components/Messages.vue'
 import MessagePreview from './components/MessagePreview.vue'
 import ComposeMail from './components/Compose.vue'
 
-const layout = ref('splitv'); // splith, splitv, splitnone
+const userSettings = reactive({
+  ui: {
+    mailLayout: 'splith', // splith, splitv, splitnone
+    maillistSize: 350,
+  },
+});
+
 const avialableLayouts = ['splith', 'splitv', 'splitnone'];
 
 const labels = ref([]);
 
 const state = reactive({
-  activeLabel: labels.value[0],
+  activeLabel: null,
   activeMessage: null,
 });
 
@@ -29,6 +35,46 @@ account.getLabels().then(newLabels => {
     state.activeLabel = labels.value[0];
   }
 });
+
+// Resizing the message list / preview
+const elResizer = ref(null);
+const resizeCursorType = computed(() => {
+  return userSettings.ui.mailLayout === 'splitv' ?
+    'ew-resize':
+    'ns-resize';
+});
+let initialSize = 0;
+let startPos = 0;
+function onResize(event) {
+  let newSize = 0;
+  if (userSettings.ui.mailLayout === 'splitv') {
+    newSize = initialSize + (event.clientX - startPos);
+  } else {
+    newSize = initialSize + (event.clientY - startPos);
+  }
+
+  if (newSize > 300) {
+    userSettings.ui.maillistSize = newSize;
+  }
+}
+function startResizing(event) {
+  document.addEventListener('mousemove', onResize, false);
+  document.addEventListener('mouseup', stopResizing);
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = resizeCursorType.value;
+
+  startPos = userSettings.ui.mailLayout === 'splitv' ?
+    event.clientX :
+    event.clientY;
+
+  initialSize = userSettings.ui.maillistSize;
+}
+function stopResizing() {
+  document.removeEventListener('mousemove', onResize);
+  document.addEventListener('mouseup', stopResizing);
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
+}
 </script>
 
 <template>
@@ -54,7 +100,7 @@ account.getLabels().then(newLabels => {
     />
 
     <label>
-      <select v-model="layout">
+      <select v-model="userSettings.ui.mailLayout">
         <option v-for="l in avialableLayouts" :key="l" :value="l">{{l}}</option>
       </select>
     </label>
@@ -66,8 +112,25 @@ account.getLabels().then(newLabels => {
     <label-list @label:selected="state.activeLabel=$event" :labels="labels" :active-label="state.activeLabel"></label-list>
   </div>
 
-  <div class="mail-container" :class="[state.activeMessage ? layout : '']">
+  <div
+    class="mail-container"
+    :class="[state.activeMessage ? userSettings.ui.mailLayout : '']"
+    :style="{'--messagelist-size': userSettings.ui.maillistSize + 'px'}"
+  >
     <messages @message:selected="state.activeMessage=$event" :active-label="state.activeLabel"/>
+    <div
+      v-if="state.activeMessage"
+      ref="elResizer"
+      class="message-resizer border-neutral-200"
+      :class="{
+        'border-l': userSettings.ui.mailLayout === 'splitv',
+        'border-r': userSettings.ui.mailLayout === 'splitv',
+        'border-t': userSettings.ui.mailLayout === 'splith',
+        'border-b': userSettings.ui.mailLayout === 'splith',
+      }"
+      :style="{cursor: resizeCursorType}"
+      @mousedown="startResizing"
+    ></div>
     <message-preview v-if="state.activeMessage" :message="state.activeMessage" @close="state.activeMessage=null" />
   </div>
   
@@ -93,21 +156,27 @@ account.getLabels().then(newLabels => {
 }
 
 .mail-container.splith {
+  grid-template-rows: var(--messagelist-size) 5px 1fr;
   grid-template-areas:
     "messages"
+    "resizer"
     "preview";
 }
 .mail-container.splitv {
+  grid-template-columns: var(--messagelist-size) 5px 1fr;
   grid-template-areas:
-    "messages preview";
+    "messages resizer preview";
 }
 .mail-container.splitnone {
   grid-template-areas:
-    "messages preview";
+    "messages resizer preview";
 }
 
 .messages {
   grid-area: messages;
+}
+.message-resizer {
+  grid-area: resizer;
 }
 .message-preview {
   grid-area: preview;
