@@ -7,6 +7,7 @@ import LabelList from './components/LabelList.vue'
 import Messages from './components/Messages.vue'
 import MessagePreview from './components/MessagePreview.vue'
 import ComposeMail from './components/Compose.vue'
+import Utilities from './components/Utilities.vue'
 
 const userSettings = reactive({
   ui: {
@@ -78,36 +79,40 @@ function stopResizing() {
 </script>
 
 <template>
-  <div class="header-topcorner bg-neutral-300 px-4">
+  <div class="header-topcorner bg-neutral-300 px-4" style="grid-area:topcorner;">
     (M) Mail
   </div>
 
-  <div class="header-toolbar pl-4 border-b border-neutral-200">
-    <span class="inline-block text-3xl w-32 min-w-max">{{state.activeLabel?.name}}</span>
-    <input
-      type="text"
-      class="
-        search
-        p-2 m-3
-        w-60
-        opacity-60
-        border border-neutral-300
-        rounded
-        hover:opacity-100 hover:w-80
-        focus:opacity-100 focus:w-80
-      "
-      placeholder="Search messages"
-    />
+  <div class="header-toolbar flex items-center pl-4 border-b border-neutral-200" style="grid-area:toolbar;">
+    <span class="text-3xl w-32 min-w-max">{{state.activeLabel?.name}}</span>
+    <div class="flex-grow">
+      <input
+        type="text"
+        class="
+          search
+          p-2 m-3
+          w-60
+          opacity-60
+          border border-neutral-300
+          rounded
+          hover:opacity-100 hover:w-80
+          focus:opacity-100 focus:w-80
+        "
+        placeholder="Search messages"
+      />
+    </div>
 
     <label>
       <select v-model="userSettings.ui.mailLayout">
         <option v-for="l in avialableLayouts" :key="l" :value="l">{{l}}</option>
       </select>
     </label>
+
+    <utilities />
   </div>
 
 
-  <div class="sidebar px-4 pt-4 bg-neutral-100">
+  <div class="sidebar px-4 pt-4 bg-neutral-100" style="grid-area:sidebar;">
     <button class="w-full py-4 mb-8 bg-primary-400" @click="showNewMail=true">New Message</button>
     <label-list @label:selected="state.activeLabel=$event" :labels="labels" :active-label="state.activeLabel"></label-list>
   </div>
@@ -116,6 +121,7 @@ function stopResizing() {
     class="mail-container"
     :class="[state.activeMessage ? userSettings.ui.mailLayout : '']"
     :style="{'--messagelist-size': userSettings.ui.maillistSize + 'px'}"
+    style="grid-area:mailcontainer;"
   >
     <messages @message:selected="state.activeMessage=$event" :labels="labels" :active-label="state.activeLabel"/>
     <div
@@ -133,7 +139,7 @@ function stopResizing() {
     ></div>
     <message-preview v-if="state.activeMessage" :message="state.activeMessage" @close="state.activeMessage=null" />
   </div>
-  
+
   <compose-mail
     v-if="showNewMail"
     class="
