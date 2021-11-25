@@ -15,6 +15,7 @@
     "@tiptap/vue-3": "^2.0.0-beta.80",
     "autoprefixer": "^10.4.0",
     "idb": "^6.1.5",
+    "lodash": "^4.17.21",
     "mitt": "^3.0.0",
     "postcss": "^8.3.11",
     "tailwindcss": "^2.2.19",

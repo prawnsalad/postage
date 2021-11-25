@@ -1,11 +1,12 @@
 <script setup>
 
 import { ref, reactive, computed } from 'vue'
+import InlineSvg from 'vue-inline-svg';
 
 import Account from '@/services/account';
 import LabelList from './components/LabelList.vue'
 import Messages from './components/Messages.vue'
-import MessagePreview from './components/MessagePreview.vue'
+import MessageThread from './components/thread/index.vue'
 import ComposeMail from './components/Compose.vue'
 import Utilities from './components/Utilities.vue'
 
@@ -137,7 +138,18 @@ function stopResizing() {
       :style="{cursor: resizeCursorType}"
       @mousedown="startResizing"
     ></div>
-    <message-preview v-if="state.activeMessage" :message="state.activeMessage" @close="state.activeMessage=null" />
+
+    <div class="message-preview overflow-y-auto px-4" v-if="state.activeMessage">
+      <div class="p-2 flex justify-end">
+        <button @click="state.activeMessage=null"><inline-svg src="/svg/delete.svg" class="" /></button>
+      </div>
+      <message-thread
+        :key="state.activeMessage.id"
+        :messages="[state.activeMessage,state.activeMessage,state.activeMessage]"
+        :labels="labels"
+        :account="account"
+      />
+    </div>
   </div>
 
   <compose-mail
@@ -146,6 +158,7 @@ function stopResizing() {
       fixed bottom-0 right-0
       h-4/6 w-10/12 md:w-6/12 lg:w-4/12
       shadow-md
+      border border-neutral-400 bg-white
     "
     @close="showNewMail=false"
   />

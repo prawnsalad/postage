@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive } from 'vue';
+import Avatar from './Avatar.vue';
 import { getMessages } from '@/services/MessageLoader';
 
 const props = defineProps({
@@ -86,9 +87,7 @@ function filteredLabels(msgLabels) {
             </div>
 
             <template v-if="m.state === 'loaded'">
-                <div v-if="options.avatars" class="avatar flex items-center justify-center">
-                    <div class="avatar-content">Ab</div>
-                </div>
+                <avatar v-if="options.avatars" :name="m.src.fromName"></avatar>
                 <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
                     <div class="info-top">
                         <span class="font-bold">{{m.src.fromName || m.src.fromEmail}}</span>
@@ -117,14 +116,6 @@ function filteredLabels(msgLabels) {
 </template>
 
 <style scoped>
-
-
-.avatar {
-    border-radius: 30%;
-    width: 45px;
-    height: 45px;
-    background: red;
-}
 
 .star {
     border: 2px solid gold;

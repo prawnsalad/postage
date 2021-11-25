@@ -1,4 +1,16 @@
 export default class Account {
+    constructor() {
+        this.user = {
+            name: 'Darren Whitlen',
+            primaryAccount: 'user@email.com',
+        };
+
+        this.accounts = [
+            { account: 'user@email.com', send: true, receive: true, },
+            { account: 'user@work.org', send: true, receive: true, },
+        ];
+    }
+
     async getLabels() {
         // Backend notes:
         // - ids are per-user

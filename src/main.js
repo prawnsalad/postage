@@ -1,21 +1,12 @@
-import { createApp } from 'vue'
+import { createApp } from 'vue';
+
+import directiveFocus from './vueExtras/focus';
 import App from './App.vue'
 
 import './global.css'
 
 const app = createApp(App);
+directiveFocus(app);
 
-app.directive('focus', {
-    mounted(el, binding, vnode) {
-        if (['INPUT', 'SELECT', 'TEXTAREA'].includes(el.nodeName)) {
-            el.focus();
-        } else if(el.querySelector) {
-            let firstInput = el.querySelector('input');
-            if (firstInput) {
-                firstInput.focus();
-            }
-        }
-    }
-});
 
 app.mount('#app');

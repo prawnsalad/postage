@@ -11,9 +11,16 @@ import Paragraph from '@tiptap/extension-paragraph';
 import TextStyle from '@tiptap/extension-text-style'
 import { Color } from '@tiptap/extension-color'
 
-defineProps({
+const props = defineProps({
   message: Object,
+  options: Object,
 });
+
+const options = Object.assign({
+    showTopic: true,
+    showHeader: true,
+    focus: 'to',
+}, props.options);
 
 const emit = defineEmits([
     'close',
@@ -27,6 +34,16 @@ const newMessage = reactive({
     subject: '',
     body: '',
 });
+
+// Any pre-set message content
+if (props.message) {
+    newMessage.from = props.message.from;
+    newMessage.to = [...props.message.to];
+    newMessage.cc = [...props.message.cc];
+    newMessage.bcc = [...props.message.bcc];
+    newMessage.subject = props.message.subject;
+    newMessage.body = props.message.body;
+}
 
 function addNewTo(contact) {
     if (contact) {
@@ -49,8 +66,8 @@ function removeCcEmail(emailIdx) {
 
 
 function promptClose() {
-    if (newMessage.body || newMessage.subject) {
-        // Just save to drafts instead. 100% chance of never loosing an email that way
+    if (editor.value.getText().trim() || newMessage.subject) {
+        // TODO: Just save to drafts instead. 100% chance of never loosing an email that way
         if (!confirm('Loose this message?')) {
             return;
         }
@@ -133,8 +150,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="flex flex-col border border-neutral-400 bg-white">
-    <header class="flex bg-neutral-700 text-neutral-50 px-2 py-1">
+  <section class="flex flex-col">
+    <header class="flex bg-neutral-700 text-neutral-50 px-2 py-1" v-if="options.showHeader">
         <span class="flex-grow">New Message</span>
         <span class="cursor-pointer" @click="openInNewWindow">[expand]</span>
         <span class="cursor-pointer" @click="promptClose"><inline-svg src="/svg/delete.svg" class="inline text-xs" /></span>
@@ -149,7 +166,7 @@ onBeforeUnmount(() => {
                 </a>
             </div>
             <form @submit.prevent="addNewTo" class="flex-grow ml-3">
-                <contact-select @select="addNewTo($event)" input-id="compose-to" v-focus />
+                <contact-select @select="addNewTo($event)" input-id="compose-to" v-focus="options.focus==='to'" />
             </form>
         </div>
 
@@ -161,11 +178,11 @@ onBeforeUnmount(() => {
                 </a>
             </div>
             <form @submit.prevent="addNewCc" class="flex-grow ml-3">
-                <contact-select @select="addNewCc($event)" input-id="compose-cc" />
+                <contact-select @select="addNewCc($event)" input-id="compose-cc" v-focus="options.focus==='cc'" />
             </form>
         </div>
 
-        <div class="flex p-2">
+        <div class="flex p-2" v-if="options.showTopic">
             <label for="compose-topic" class="text-sm">Topic</label>
             <input id="compose-topic" v-model="newMessage.subject" class="ml-3 flex-grow outline-none" />
         </div>
@@ -173,7 +190,7 @@ onBeforeUnmount(() => {
 
     <div class="flex-grow overflow-auto editor">
         <!-- <div contenteditable class="h-full outline-none"></div> -->
-        <editor-content :editor="editor" class="h-full" />
+        <editor-content :editor="editor" class="h-full" v-focus="options.focus==='body'" />
     </div>
 
     <div class="p-2 flex whitespace-nowrap relative tools">
@@ -226,6 +243,7 @@ onBeforeUnmount(() => {
             </div>
         </div>
 
+        <button @click="promptClose"><inline-svg src="/svg/trash.svg" class="text-lg mr-2" /></button>
         <button
             class="bg-primary-400 text-primary-100 px-3 py-1 rounded"
             @click="onSendClick"
