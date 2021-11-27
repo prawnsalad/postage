@@ -1,28 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue';
 import _ from 'lodash';
 import InlineSvg from 'vue-inline-svg';
 import Message from './Message.vue';
+import Account from '@/services/account';
 import Avatar from '@/components/Avatar.vue';
 import Compose from '@/components/Compose.vue';
 
-const props = defineProps({
-  messages: Object,
-  labels: Object,
-  account: Object,
-});
+import type { IMessage, ILabel } from '@/types/common';
+
+const props = defineProps<{
+    messages: Array<IMessage>,
+    labels?: Array<ILabel>,
+    account: Account,
+}>();
 
 const showCompose = ref(false);
-const replyTemplate = ref(null);
-function startReply(replyToMessage) {
+const replyTemplate = ref<IMessage>({
+    id: '',
+    threadId: '',
+    from: '',
+    to: [],
+    cc: [],
+    bcc: [],
+    subject: '',
+    body: '',
+    labels: []
+});
+
+function startReply(replyToMessage: IMessage) {
     let m = replyToMessage;
     replyTemplate.value = {
+        id: '',
+        threadId: m.threadId,
         from: '',
-        to: [m.to],
+        to: [...m.to],
         cc: [],
         bcc: [],
         subject: m.subject,
         body: '',
+        labels: []
     };
     showCompose.value = true;
 }
@@ -41,10 +58,10 @@ function startReply(replyToMessage) {
     ],
 */
 const threadInfo = computed(() => {
-    let labelsMap = {};
+    let labelsMap: {[key: string]: ILabel} = {};
     (props.labels || []).forEach(l => labelsMap[l.id] = l);
 
-    let labels = [];
+    let labels:Array<ILabel> = [];
     for (let labelId of _.uniqBy(props.messages.map(m => m.labels), 'id')) {
         if (labelsMap[labelId]) {
             labels.push(labelsMap[labelId]);
@@ -52,7 +69,7 @@ const threadInfo = computed(() => {
     }
 
     return {
-        topic: props.messages[0]?.topic,
+        topic: props.messages[0]?.subject,
         threadId: props.messages[0]?.threadId,
         labels: labels,
     };

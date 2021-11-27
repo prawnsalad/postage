@@ -1,8 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { ref, reactive, computed, onBeforeUnmount } from 'vue';
 import InlineSvg from 'vue-inline-svg';
 import ContactSelect from './ContactSelect.vue';
 import ColourPicker from './ColourPicker.vue';
+
+import type { IMessage, IContact, IComposeOptions } from '@/types/common';
 
 import { mergeAttributes } from '@tiptap/core'
 import { useEditor, EditorContent, BubbleMenu, Extension } from '@tiptap/vue-3';
@@ -16,17 +18,19 @@ const props = defineProps({
   options: Object,
 });
 
-const options = Object.assign({
+
+const options: IComposeOptions = {
     showTopic: true,
     showHeader: true,
     focus: 'to',
-}, props.options);
+};
+Object.assign(options, props.options);
 
 const emit = defineEmits([
     'close',
 ]);
 
-const newMessage = reactive({
+const newMessage = reactive<IMessage>({
     from: '',
     to: [],
     cc: [],
@@ -45,21 +49,21 @@ if (props.message) {
     newMessage.body = props.message.body;
 }
 
-function addNewTo(contact) {
+function addNewTo(contact: IContact) {
     if (contact) {
         newMessage.to.push(contact.emails[0]);
     }
 }
-function removeToEmail(emailIdx) {
+function removeToEmail(emailIdx: number) {
     newMessage.to.splice(emailIdx, 1);
 }
 
-function addNewCc(contact) {
+function addNewCc(contact: IContact) {
     if (contact) {
         newMessage.cc.push(contact.emails[0]);
     }
 }
-function removeCcEmail(emailIdx) {
+function removeCcEmail(emailIdx: number) {
     newMessage.cc.splice(emailIdx, 1);
 }
 
@@ -130,7 +134,7 @@ onBeforeUnmount(() => {
 
 
 // Colour picker stuff
-const elColourPicker = ref(null);
+const elColourPicker = ref<HTMLElement>();
 const showColourPicker = ref(false);
 function onColourSelected(colour) {
     editor.value.chain().focus().setColor(colour).run();
@@ -153,7 +157,6 @@ onBeforeUnmount(() => {
   <section class="flex flex-col">
     <header class="flex bg-neutral-700 text-neutral-50 px-2 py-1" v-if="options.showHeader">
         <span class="flex-grow">New Message</span>
-        <span class="cursor-pointer" @click="openInNewWindow">[expand]</span>
         <span class="cursor-pointer" @click="promptClose"><inline-svg src="/svg/delete.svg" class="inline text-xs" /></span>
     </header>
 
@@ -165,7 +168,7 @@ onBeforeUnmount(() => {
                     <inline-svg src="/svg/delete.svg" class="inline text-xs" />
                 </a>
             </div>
-            <form @submit.prevent="addNewTo" class="flex-grow ml-3">
+            <form @submit.prevent="" class="flex-grow ml-3">
                 <contact-select @select="addNewTo($event)" input-id="compose-to" v-focus="options.focus==='to'" />
             </form>
         </div>
@@ -177,7 +180,7 @@ onBeforeUnmount(() => {
                     <inline-svg src="/svg/delete.svg" class="inline text-xs" />
                 </a>
             </div>
-            <form @submit.prevent="addNewCc" class="flex-grow ml-3">
+            <form @submit.prevent="" class="flex-grow ml-3">
                 <contact-select @select="addNewCc($event)" input-id="compose-cc" v-focus="options.focus==='cc'" />
             </form>
         </div>

@@ -1,4 +1,20 @@
+import type { IMessage, ILabel } from '@/types/common';
+
+interface IUser {
+    name: string,
+    primaryAccount: string
+}
+
+interface IAccount {
+    account: string,
+    send: boolean,
+    receive: boolean
+}
+
 export default class Account {
+    user: IUser;
+    accounts: Array<IAccount>
+
     constructor() {
         this.user = {
             name: 'Darren Whitlen',
@@ -11,7 +27,7 @@ export default class Account {
         ];
     }
 
-    async getLabels() {
+    async getLabels(): Promise<Array<ILabel>> {
         // Backend notes:
         // - ids are per-user
         // - ids are attached to messages
