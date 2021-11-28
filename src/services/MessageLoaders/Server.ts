@@ -1,5 +1,7 @@
 export default class MessageLoaderServer {
-    constructor(opts={}) {
+    opts: object
+
+    constructor(opts: object={}) {
         this.opts = opts;
     }
 
@@ -8,8 +10,9 @@ export default class MessageLoaderServer {
     }
 
     async getRecords(ids=[]) {
-        let resp = null;
-        let inbox = null;
+        let resp: Response;
+        let inbox: any;
+
         try {
             resp = await fetch('http://localhost:8081/serverinbox.json'); // get all messages IDs at once
             inbox = await resp.json();
@@ -18,7 +21,7 @@ export default class MessageLoaderServer {
             return [];
         }
 
-        let records = ids.map(async id => {
+        let waitingRecords = ids.map(async id => {
             let record = {
                 id,
                 loaded: false,
@@ -36,6 +39,14 @@ export default class MessageLoaderServer {
             return record;
         });
 
-        return (await Promise.allSettled(records)).map(p => p.value);
+        let settled = await Promise.allSettled(waitingRecords);
+        let records: Array<object> = [];
+        for (let record of settled) {
+            if (record.status === 'fulfilled') {
+                records.push(record.value);
+            }
+        }
+
+        return records;
     }
 }
