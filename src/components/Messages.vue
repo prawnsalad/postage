@@ -2,11 +2,11 @@
 import { ref, reactive } from 'vue';
 import Avatar from './Avatar.vue';
 import { getMessages } from '@/services/MessageLoader';
-import type { IMessageLoader, IMessage, ILabel } from '@/types/common';
+import type { IMessageLoader, ILabel } from '@/types/common';
 
 const props = defineProps<{
   labels: Array<ILabel>,
-  activeLabel: ILabel,
+  activeLabel: ILabel | null,
 }>();
 
 

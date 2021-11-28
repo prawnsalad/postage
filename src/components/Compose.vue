@@ -31,6 +31,9 @@ const emit = defineEmits([
 ]);
 
 const newMessage = reactive<IMessage>({
+    id: '',
+    threadId: '',
+    labels: [],
     from: '',
     to: [],
     cc: [],

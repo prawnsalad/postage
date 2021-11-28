@@ -1,10 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
+import type { IMessage, ILabel } from '@/types/common';
 
-const props = defineProps({
-  labels: Array,
-  activeLabel: Object
-});
+const props = defineProps<{
+  labels: Array<ILabel>,
+  activeLabel: ILabel | null,
+}>();
 
 const staticLabels = computed(() => {
   return props.labels.filter(l => !l.custom);

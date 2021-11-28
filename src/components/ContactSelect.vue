@@ -1,11 +1,12 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import type { IContact } from '@/types/common';
 import * as Contacts from '@/services/Contacts';
 
-const props = defineProps({
-  contact: Object,
-  inputId: String,
-});
+const props = defineProps<{
+  contact?: IContact,
+  inputId?: string,
+}>();
 
 const emit = defineEmits([
     'input',
@@ -65,7 +66,7 @@ function selectCurrent() {
 <template>
   <div>
       <input
-        :id="props.inputId"
+        :id="props.inputId || ''"
         type="text"
         v-model="filter"
         class="outline-none w-full"
@@ -74,6 +75,7 @@ function selectCurrent() {
         @keydown.enter.prevent="selectCurrent"
         @blur="selectCurrent"
       />
+
       <ul v-if="filteredContacts.length > 0" class="absolute bg-white border border-neutral-400 border-b-0">
           <li
             v-for="(contact, contactIdx) in filteredContacts"

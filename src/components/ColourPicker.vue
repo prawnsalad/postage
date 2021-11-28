@@ -1,5 +1,4 @@
-<script setup>
-import { ref, reactive, computed } from 'vue';
+<script setup lang="ts">
 
 defineProps({
   colour: Object,

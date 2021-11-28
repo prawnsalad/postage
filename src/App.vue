@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 
 import { ref, reactive, computed } from 'vue'
 import InlineSvg from 'vue-inline-svg';
@@ -9,6 +9,7 @@ import Messages from './components/Messages.vue'
 import MessageThread from './components/thread/index.vue'
 import ComposeMail from './components/Compose.vue'
 import Utilities from './components/Utilities.vue'
+import { ILabel, IMessage } from '@/types/common';
 
 const userSettings = reactive({
   ui: {
@@ -19,9 +20,12 @@ const userSettings = reactive({
 
 const avialableLayouts = ['splith', 'splitv', 'splitnone'];
 
-const labels = ref([]);
+const labels = ref<ILabel[]>([]);
 
-const state = reactive({
+const state = reactive<{
+  activeLabel: ILabel | null,
+  activeMessage: IMessage | null,  
+}>({
   activeLabel: null,
   activeMessage: null,
 });
@@ -121,7 +125,6 @@ function stopResizing() {
   <div
     class="mail-container"
     :class="[state.activeMessage ? userSettings.ui.mailLayout : '']"
-    :style="{'--messagelist-size': userSettings.ui.maillistSize + 'px'}"
     style="grid-area:mailcontainer;"
   >
     <messages @message:selected="state.activeMessage=$event" :labels="labels" :active-label="state.activeLabel"/>
@@ -175,14 +178,14 @@ function stopResizing() {
 }
 
 .mail-container.splith {
-  grid-template-rows: var(--messagelist-size) 5px 1fr;
+  grid-template-rows: v-bind('userSettings.ui.maillistSize + "px"') 5px 1fr;
   grid-template-areas:
     "messages"
     "resizer"
     "preview";
 }
 .mail-container.splitv {
-  grid-template-columns: var(--messagelist-size) 5px 1fr;
+  grid-template-columns: v-bind('userSettings.ui.maillistSize + "px"') 5px 1fr;
   grid-template-areas:
     "messages resizer preview";
 }

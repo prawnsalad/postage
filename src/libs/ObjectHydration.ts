@@ -1,21 +1,14 @@
-// Create a promise with the resolve/reject functions tacked on
-function makePromise() {
-    let resolve = null;
-    let reject = null;
-    let p = new Promise((res, rej) => {
-        resolve = res;
-        reject = rej;
-    });
-    p.resolve = resolve;
-    p.reject = reject;
-    return p;
+import makeDeferred from './Deferred';
+
+interface IObjectSource {
+    getRecords(ids: Array<string>): Promise<any>
 }
 
-export function loadObjectsWithIds(ids, sources=[]) {
+export function loadObjectsWithIds(ids: string[], sources: IObjectSource[]=[]) {
     let collectionMap = Object.create(null); // id:<record in collection> for faster lookup
-    let collection = [];
-    let promises = sources.map(() => makePromise());
-    promises.push(makePromise()); // add a final one for when everything has completed
+    let collection: any = [];
+    let promises = sources.map(() => makeDeferred());
+    promises.push(makeDeferred()); // add a final one for when everything has completed
 
     // Build our record collection
     ids.forEach(id => {
@@ -35,7 +28,7 @@ export function loadObjectsWithIds(ids, sources=[]) {
         for (let i=0; i<sources.length; i++) {
             let source = sources[i];
 
-            let recordsFromSource = [];
+            let recordsFromSource;
             try {
                 recordsFromSource = await source.getRecords(outstandingRecordIds);
             } catch (err) {
@@ -54,7 +47,7 @@ export function loadObjectsWithIds(ids, sources=[]) {
             });
 
             // Let the consumer know that this source has completed
-            promises[i].resolve();
+            promises[i].resolve(true);
         }
 
         // Any remaining unloaded records have failed
@@ -65,7 +58,7 @@ export function loadObjectsWithIds(ids, sources=[]) {
         });
 
         // Complete the final promises now that we've finished everything
-        promises[promises.length-1].resolve();
+        promises[promises.length-1].resolve(true);
     }, 0)
 
     return {
