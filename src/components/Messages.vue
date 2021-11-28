@@ -1,18 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from 'vue';
 import Avatar from './Avatar.vue';
 import { getMessages } from '@/services/MessageLoader';
+import type { IMessageLoader, IMessage, ILabel } from '@/types/common';
 
-const props = defineProps({
-  labels: Object,
-  activeLabel: Object,
-});
+const props = defineProps<{
+  labels: Array<ILabel>,
+  activeLabel: ILabel,
+}>();
 
 
 
-const messages = reactive({
-    messages: [],
-});
+const messages = ref<Array<IMessageLoader>>([]);
 
 
 let res = getMessages([
@@ -26,7 +25,7 @@ let res = getMessages([
 // A stage = loading from the local cache or loading from the server
 res.promises.forEach(async p => {
     await p;
-    messages.messages = [...res.collection];
+    messages.value = [...res.collection];
 });
 
 const options = reactive({
@@ -34,13 +33,13 @@ const options = reactive({
 });
 
 // Only show the labels for the non-active label on messages in the list
-function filteredLabels(msgLabels) {
+function filteredLabels(msgLabels: Array<number>): Array<ILabel> {
     let labelsMap = {};
     props.labels.forEach(l => labelsMap[l.id] = l);
 
     let activeLabelName = props.activeLabel?.name.toLowerCase();
 
-    let ret = [];
+    let ret: Array<ILabel> = [];
     for (let labelId of msgLabels) {
         let label = labelsMap[labelId];
         // The label might not exist if it's been deleted
@@ -73,7 +72,7 @@ function filteredLabels(msgLabels) {
     </div>
     <div class="flex-grow overflow-y-auto">
         <div
-            v-for="m in messages.messages"
+            v-for="m in messages"
             :key="m.id"
             class="
                 flex p-2
@@ -87,10 +86,10 @@ function filteredLabels(msgLabels) {
             </div>
 
             <template v-if="m.state === 'loaded'">
-                <avatar v-if="options.avatars" :name="m.src.fromName"></avatar>
+                <avatar v-if="options.avatars" :name="m.src.from"></avatar>
                 <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
                     <div class="info-top">
-                        <span class="font-bold">{{m.src.fromName || m.src.fromEmail}}</span>
+                        <span class="font-bold">{{m.src.from || m.src.from}}</span>
                         <div class="inline-block ml-4 text-sm">
                             <span class="star inline-block"></span>
                             <span
@@ -100,7 +99,7 @@ function filteredLabels(msgLabels) {
                             >{{l.name}}</span>
                         </div>
                     </div>
-                    <div class="topic whitespace-nowrap">{{m.src.topic}}</div>
+                    <div class="topic whitespace-nowrap">{{m.src.subject}}</div>
                 </div>
 
                 <div>

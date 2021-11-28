@@ -33,13 +33,15 @@ export default class MessageLoaderIndexdb {
             messages.push(
                 {
                     id: i,
-                    threadId: i, // thread IDs can just be the first message ID in the thread (can we
+                    threadId: i.toString(), // thread IDs can just be the first message ID in the thread (can we
                                  // determine a thread id on message ingestion or should it be determined
                                  // in the UI with the messags it has?)
-                    fromEmail: 'someone@gmail.com',
-                    fromName: 'Some name',
-                    to: 'you@domain.com',
-                    topic: 'RE: RE: FW: help pls',
+                    from: 'someone@gmail.com',
+                    to: ['you@domain.com'],
+                    cc: [],
+                    bcc: [],
+                    subject: 'RE: RE: FW: help pls',
+                    body: 'wooo my body ' + i,
                     labels: [
                         labels[Math.floor(Math.random()*labels.length)],
                     ],
@@ -48,7 +50,7 @@ export default class MessageLoaderIndexdb {
         }
         const tx = this.db.transaction('messages', 'readwrite');
         await Promise.all(messages.map(m => tx.store.add(m)));
-        await tc.done;
+        await tx.done;
     }
 
     async getRecords(ids=[]) {

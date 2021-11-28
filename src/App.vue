@@ -3,7 +3,7 @@
 import { ref, reactive, computed } from 'vue'
 import InlineSvg from 'vue-inline-svg';
 
-import Account from '@/services/account';
+import Account from '@/services/Account';
 import LabelList from './components/LabelList.vue'
 import Messages from './components/Messages.vue'
 import MessageThread from './components/thread/index.vue'

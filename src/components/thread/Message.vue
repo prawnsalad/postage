@@ -16,19 +16,6 @@ const options = reactive({
     avatars: true,
 });
 
-/*
-    id: i,
-    threadId: i, // thread IDs can just be the first message ID in the thread (can we
-                    // determine a thread id on message ingestion or should it be determined
-                    // in the UI with the messags it has?)
-    fromEmail: 'someone@gmail.com',
-    fromName: 'Some name',
-    to: 'you@domain.com',
-    topic: 'RE: RE: FW: help pls',
-    labels: [
-        labels[Math.floor(Math.random()*labels.length)],
-    ],
-*/
 </script>
 
 <template>
@@ -54,7 +41,7 @@ const options = reactive({
       </div>
 
       <div class="mt-4">
-        This is the body!<br />{{message.body}}
+        {{message.body}}
       </div>
     </div>
   </article>

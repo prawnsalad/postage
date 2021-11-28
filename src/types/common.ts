@@ -4,6 +4,11 @@ export interface ILabel {
     custom: boolean
 }
 
+export interface IMessageLoader {
+    id: string,
+    src: IMessage,
+    state: 'loading' | 'loaded' | 'failed'
+}
 export interface IMessage {
     id: string,
     threadId: string,

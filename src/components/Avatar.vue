@@ -24,7 +24,7 @@ const initialColour = computed(() => {
     let sumAsciiVal = initials.value
         .split('')
         .map(letter => letter.charCodeAt(0))
-        .reduce((previous, current) => previous + current);
+        .reduce((previous, current) => previous + current, 0);
     let col = colours[sumAsciiVal % colours.length];
     return col;
 

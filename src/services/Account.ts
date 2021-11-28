@@ -1,4 +1,4 @@
-import type { IMessage, ILabel } from '@/types/common';
+import type { ILabel } from '@/types/common';
 
 interface IUser {
     name: string,

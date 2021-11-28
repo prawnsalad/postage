@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import _ from 'lodash';
 import InlineSvg from 'vue-inline-svg';
 import Message from './Message.vue';
-import Account from '@/services/account';
+import Account from '@/services/Account';
 import Avatar from '@/components/Avatar.vue';
 import Compose from '@/components/Compose.vue';
 
@@ -44,19 +44,6 @@ function startReply(replyToMessage: IMessage) {
     showCompose.value = true;
 }
 
-/*
-    id: i,
-    threadId: i, // thread IDs can just be the first message ID in the thread (can we
-                    // determine a thread id on message ingestion or should it be determined
-                    // in the UI with the messags it has?)
-    fromEmail: 'someone@gmail.com',
-    fromName: 'Some name',
-    to: 'you@domain.com',
-    topic: 'RE: RE: FW: help pls',
-    labels: [
-        labels[Math.floor(Math.random()*labels.length)],
-    ],
-*/
 const threadInfo = computed(() => {
     let labelsMap: {[key: string]: ILabel} = {};
     (props.labels || []).forEach(l => labelsMap[l.id] = l);
