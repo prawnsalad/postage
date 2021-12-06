@@ -4,6 +4,7 @@ import { ref, reactive, computed } from 'vue'
 import InlineSvg from 'vue-inline-svg';
 
 import AppInstance from '@/services/AppInstance';
+import Logo from '@/components/Logo.vue';
 import LabelList from '@/components/LabelList.vue'
 import Messages from '@/components/Messages.vue'
 import MessageThread from '@/components/thread/index.vue'
@@ -93,8 +94,12 @@ function stopResizing() {
 </script>
 
 <template>
-  <div class="header-topcorner bg-neutral-300 px-4" style="grid-area:topcorner;">
-    (M) Mail
+  <div class="header-topcorner bg-neutral-300 px-4 py-2 flex gap-4 text-sm" style="grid-area:topcorner;">
+    <logo :small="true" />
+    <div class="flex flex-col justify-end">
+      <div>{{account.user.primaryAccount}}</div>
+      <div><a href="#">Logout</a> <a href="#">Settings</a></div>
+    </div>
   </div>
 
   <div class="header-toolbar flex items-center pl-4 border-b border-neutral-200" style="grid-area:toolbar;">

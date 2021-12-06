@@ -8,7 +8,7 @@ module.exports = {
     colors: {
       transparent: 'transparent',
       // https://tailwindcss.com/docs/customizing-colors#color-palette-reference
-      primary: colors.orange,
+      primary: colors.purple,
       neutral: colors.warmGray,
       danger: colors.red,
       success: colors.green,

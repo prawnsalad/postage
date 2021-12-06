@@ -1,5 +1,6 @@
 {
-  "name": "mail",
+  "name": "postage",
+  "description": "An web based email or other messaging client",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
