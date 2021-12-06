@@ -39,7 +39,8 @@ const newMessage = reactive<IMessage>({
     cc: [],
     bcc: [],
     subject: '',
-    body: '',
+    bodyText: '',
+    bodyHtml: '',
 });
 
 // Any pre-set message content
@@ -49,7 +50,8 @@ if (props.message) {
     newMessage.cc = [...props.message.cc];
     newMessage.bcc = [...props.message.bcc];
     newMessage.subject = props.message.subject;
-    newMessage.body = props.message.body;
+    newMessage.bodyText = props.message.bodyText;
+    newMessage.bodyHtml = props.message.bodyHtml;
 }
 
 function addNewTo(contact: IContact) {

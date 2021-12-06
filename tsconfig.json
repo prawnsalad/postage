@@ -17,7 +17,7 @@
       "esModuleInterop": true,
       "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
       "skipLibCheck": true,
-      "allowJs": true,
+      "allowJs": false,
       "noImplicitAny": false,
       "types": ["vite/client"],
       "noEmit": true

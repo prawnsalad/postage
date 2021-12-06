@@ -1,4 +1,8 @@
-export default class MessageLoaderServer {
+
+import { IObjectSource } from '@/libs/ObjectHydration';
+import AppInstance from '../AppInstance';
+
+export default class MessageLoaderServer implements IObjectSource{
     opts: object
 
     constructor(opts: object={}) {
@@ -9,13 +13,21 @@ export default class MessageLoaderServer {
         return this;
     }
 
-    async getRecords(ids=[]) {
-        let resp: Response;
+    async getLatest(labelIds: number[]) {
+        let [err, messages] = await AppInstance.instance().api.call('messages.latest', labelIds);
+        return messages;
+    }
+
+    async getThread(threadId: string) {
+        let [err, thread] = await AppInstance.instance().api.call('messages.thread', threadId);
+        return thread.messages;
+    }
+
+    async getRecords(ids: string[]=[]): Promise<any> {
         let inbox: any;
 
         try {
-            resp = await fetch('http://localhost:8081/serverinbox.json'); // get all messages IDs at once
-            inbox = await resp.json();
+            [, inbox] = await AppInstance.instance().api.call('messages.get', ids);
         } catch (err) {
             console.error('Error loading messages from server', err);
             return [];

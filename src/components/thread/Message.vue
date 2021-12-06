@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
+import DOMPurify from 'dompurify';
 import InlineSvg from 'vue-inline-svg';
 import Avatar from '@/components/Avatar.vue';
 import type { IMessage } from '@/types/common';
@@ -14,6 +15,36 @@ const emit = defineEmits([
 
 const options = reactive({
     avatars: true,
+});
+
+
+DOMPurify.addHook('afterSanitizeAttributes', (currentNode, hookEvent, config) => {
+  if (currentNode.id) {
+    currentNode.id = '';
+  }
+  if (currentNode.className) {
+    currentNode.className = '';
+  }
+  if (currentNode.style.position) {
+    currentNode.style.position = '';
+  }
+  return currentNode;
+});
+
+const cleanMessageHtml = computed(() => {
+  let ret = '';
+  if (props.message.bodyHtml) {
+    try {
+      ret = DOMPurify.sanitize(props.message.bodyHtml, {USE_PROFILES: {html: true}});
+    } catch(err) {
+      console.error(err);
+      ret = '[Error parsing HTML email]';
+    }
+  } else {
+    ret = props.message.bodyText;
+  }
+
+  return ret;
 });
 
 </script>
@@ -41,7 +72,7 @@ const options = reactive({
       </div>
 
       <div class="mt-4">
-        {{message.body}}
+        <div v-html="cleanMessageHtml" class="overflow-hidden"></div>
       </div>
     </div>
   </article>

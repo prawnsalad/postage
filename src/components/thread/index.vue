@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import _ from 'lodash';
 import InlineSvg from 'vue-inline-svg';
 import Message from './Message.vue';
+import { getThread } from '@/services/MessageLoader';
 import Account from '@/services/Account';
 import Avatar from '@/components/Avatar.vue';
 import Compose from '@/components/Compose.vue';
@@ -10,10 +11,25 @@ import Compose from '@/components/Compose.vue';
 import type { IMessage, ILabel } from '@/types/common';
 
 const props = defineProps<{
-    messages: Array<IMessage>,
+    messages?: Array<IMessage>,
+    threadId?: string,
     labels?: Array<ILabel>,
     account: Account,
 }>();
+
+const messages = ref<IMessage[]>([]);
+async function updateThread() {
+    if (props.messages) {
+        messages.value = props.messages;
+    } else if (props.threadId) {
+        let res = await getThread(props.threadId);
+        // TODO: Can we use the res.collection message loader directly instead?
+        messages.value = [...res.collection.map(m => m.src)];
+    }
+}
+
+updateThread();
+watch([props.messages, props.threadId], updateThread);
 
 const showCompose = ref(false);
 const replyTemplate = ref<IMessage>({
@@ -24,7 +40,8 @@ const replyTemplate = ref<IMessage>({
     cc: [],
     bcc: [],
     subject: '',
-    body: '',
+    bodyText: '',
+    bodyHtml: '',
     labels: []
 });
 
@@ -38,7 +55,8 @@ function startReply(replyToMessage: IMessage) {
         cc: [],
         bcc: [],
         subject: m.subject,
-        body: '',
+        bodyText: '',
+        bodyHtml: '',
         labels: []
     };
     showCompose.value = true;
@@ -49,15 +67,15 @@ const threadInfo = computed(() => {
     (props.labels || []).forEach(l => labelsMap[l.id] = l);
 
     let labels:Array<ILabel> = [];
-    for (let labelId of _.uniqBy(props.messages.map(m => m.labels), 'id')) {
+    for (let labelId of _.uniqBy(messages.value.map(m => m.labels), 'id')) {
         if (labelsMap[labelId]) {
             labels.push(labelsMap[labelId]);
         }
     }
 
     return {
-        topic: props.messages[0]?.subject,
-        threadId: props.messages[0]?.threadId,
+        topic: messages.value[0]?.subject,
+        threadId: messages.value[0]?.threadId,
         labels: labels,
     };
 });
@@ -67,7 +85,7 @@ const threadInfo = computed(() => {
 <template>
   <section class="message-thread">
       <header class="mb-4">
-        <div class="text-lg">{{threadInfo.topic}}</div>
+        <div class="text-2xl font-bold">{{threadInfo.topic}}</div>
         <div>
             <span
                 v-for="l in threadInfo.labels"

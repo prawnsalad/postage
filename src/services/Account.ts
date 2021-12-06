@@ -1,4 +1,5 @@
 import type { ILabel } from '@/types/common';
+import ApiService from './Api';
 
 interface IUser {
     name: string,
@@ -12,10 +13,12 @@ interface IAccount {
 }
 
 export default class Account {
+    api: ApiService;
     user: IUser;
-    accounts: Array<IAccount>
+    accounts: Array<IAccount>;
 
-    constructor() {
+    constructor(api: ApiService) {
+        this.api = api;
         this.user = {
             name: 'Darren Whitlen',
             primaryAccount: 'user@email.com',
@@ -28,19 +31,7 @@ export default class Account {
     }
 
     async getLabels(): Promise<Array<ILabel>> {
-        // Backend notes:
-        // - ids are per-user
-        // - ids are attached to messages
-        // - labels dont get deleted, only marked as deleted. because emails with
-        //   the label ID will still be there.
-        return [
-            { id: 1, name: 'Inbox', custom: false },
-            { id: 2, name: 'Drafts', custom: false },
-            { id: 3, name: 'Sent', custom: false },
-            { id: 4, name: 'Spam', custom: false },
-            { id: 5, name: 'Deleted', custom: false },
-            { id: 6, name: 'Custom Label', custom: true },
-            { id: 7, name: 'Label 69', custom: true },
-        ];
+        let [err, labels] = await this.api.call('labels.get');
+        return labels;
     }
 }

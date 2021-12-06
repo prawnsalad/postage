@@ -1,14 +1,22 @@
+import { IMessage } from '@/types/common';
 import makeDeferred from './Deferred';
 
-interface IObjectSource {
+export interface IObjectSource {
     getRecords(ids: Array<string>): Promise<any>
 }
 
+interface IRecordState {
+    id: string,
+    state: 'loading' | 'loaded' | 'failed',
+    src: object,
+}
+
 export function loadObjectsWithIds(ids: string[], sources: IObjectSource[]=[]) {
-    let collectionMap = Object.create(null); // id:<record in collection> for faster lookup
+    let collectionMap: {[key: string]: IRecordState} = Object.create(null);
     let collection: any = [];
-    let promises = sources.map(() => makeDeferred());
-    promises.push(makeDeferred()); // add a final one for when everything has completed
+
+    let sourcePromises = sources.map(() => makeDeferred());
+    sourcePromises.push(makeDeferred()); // add a final one for when everything has completed
 
     // Build our record collection
     ids.forEach(id => {
@@ -47,7 +55,7 @@ export function loadObjectsWithIds(ids: string[], sources: IObjectSource[]=[]) {
             });
 
             // Let the consumer know that this source has completed
-            promises[i].resolve(true);
+            sourcePromises[i].resolve();
         }
 
         // Any remaining unloaded records have failed
@@ -58,23 +66,19 @@ export function loadObjectsWithIds(ids: string[], sources: IObjectSource[]=[]) {
         });
 
         // Complete the final promises now that we've finished everything
-        promises[promises.length-1].resolve(true);
-    }, 0)
+        sourcePromises[sourcePromises.length-1].resolve();
+    }, 0);
 
     return {
         collection,
-        promises,
+        promises: sourcePromises,
     };
 }
 
-
-
-
-
 /**
  * Example usage
- * 
- * 
+ *
+ *
 
 class TestRecordDatabase {
     constructor(records, opts={}) {

@@ -1,9 +1,9 @@
 export interface Deferred<T> extends Promise<T> {
-    resolve(value: T): void,
-    reject(reason: any): void,
+    resolve(value?: T): void,
+    reject(reason?: any): void,
 }
 
-export default function makeDeferred() {
+export default function makeDeferred<T>() {
     let resolve;
     let reject;
     let p: any = new Promise((res, rej) => {
@@ -12,5 +12,5 @@ export default function makeDeferred() {
     });
     p.resolve = resolve;
     p.reject = reject;
-    return p as Deferred<any>;
+    return p as Deferred<T>;
 }

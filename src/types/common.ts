@@ -1,5 +1,5 @@
 export interface ILabel {
-    id: string | number,
+    id: number,
     name: string,
     custom: boolean
 }
@@ -17,7 +17,8 @@ export interface IMessage {
     cc: string[],
     bcc: string[],
     subject: string,
-    body: string,
+    bodyText: string,
+    bodyHtml: string,
     labels: Array<number>
 }
 

@@ -3,12 +3,12 @@
 import { ref, reactive, computed } from 'vue'
 import InlineSvg from 'vue-inline-svg';
 
-import Account from '@/services/Account';
-import LabelList from './components/LabelList.vue'
-import Messages from './components/Messages.vue'
-import MessageThread from './components/thread/index.vue'
-import ComposeMail from './components/Compose.vue'
-import Utilities from './components/Utilities.vue'
+import AppInstance from '@/services/AppInstance';
+import LabelList from '@/components/LabelList.vue'
+import Messages from '@/components/Messages.vue'
+import MessageThread from '@/components/thread/index.vue'
+import ComposeMail from '@/components/Compose.vue'
+import Utilities from '@/components/Utilities.vue'
 import { ILabel, IMessage } from '@/types/common';
 
 const userSettings = reactive({
@@ -24,16 +24,16 @@ const labels = ref<ILabel[]>([]);
 
 const state = reactive<{
   activeLabel: ILabel | null,
-  activeMessage: IMessage | null,  
+  activeThreadId: string,
 }>({
   activeLabel: null,
-  activeMessage: null,
+  activeThreadId: '',
 });
 
 const showNewMail = ref(false);
 
 // When stuff updates in our account (labels, account config, user info, etc), update our states
-const account = new Account();
+const account = AppInstance.instance().account;
 account.getLabels().then(newLabels => {
   labels.value = newLabels;
 
@@ -43,7 +43,7 @@ account.getLabels().then(newLabels => {
 });
 
 // Resizing the message list / preview
-const elResizer = ref(null);
+const elResizer = ref<HTMLElement>();
 const resizeCursorType = computed(() => {
   return userSettings.ui.mailLayout === 'splitv' ?
     'ew-resize':
@@ -53,13 +53,22 @@ let initialSize = 0;
 let startPos = 0;
 function onResize(event) {
   let newSize = 0;
-  if (userSettings.ui.mailLayout === 'splitv') {
+  let splitLayout = userSettings.ui.mailLayout;
+
+  if (splitLayout === 'splitv') {
     newSize = initialSize + (event.clientX - startPos);
   } else {
     newSize = initialSize + (event.clientY - startPos);
   }
 
-  if (newSize > 300) {
+  // Compare the new size to the parent element to make sure we're always within 100px of it's size
+  let parentEl = elResizer.value ?
+      elResizer.value.parentElement :
+      null;
+
+  if (splitLayout === 'splitv' && newSize > 300 && newSize < (parentEl?parentEl.clientWidth-100:0)) {
+    userSettings.ui.maillistSize = newSize;
+  } else if (splitLayout === 'splith' && newSize > 100 && newSize < (parentEl?parentEl.clientHeight-100:0)) {
     userSettings.ui.maillistSize = newSize;
   }
 }
@@ -124,12 +133,17 @@ function stopResizing() {
 
   <div
     class="mail-container"
-    :class="[state.activeMessage ? userSettings.ui.mailLayout : '']"
+    :class="[state.activeThreadId ? userSettings.ui.mailLayout : '']"
     style="grid-area:mailcontainer;"
   >
-    <messages @message:selected="state.activeMessage=$event" :labels="labels" :active-label="state.activeLabel"/>
+    <messages
+      @message:selected="state.activeThreadId=$event.threadId"
+      :labels="labels"
+      :active-label="state.activeLabel"
+      :active-thread-id="state.activeThreadId"
+    />
     <div
-      v-if="state.activeMessage"
+      v-if="state.activeThreadId"
       ref="elResizer"
       class="message-resizer border-neutral-200"
       :class="{
@@ -142,13 +156,13 @@ function stopResizing() {
       @mousedown="startResizing"
     ></div>
 
-    <div class="message-preview overflow-y-auto px-4" v-if="state.activeMessage">
+    <div class="message-preview overflow-y-auto px-4" v-if="state.activeThreadId">
       <div class="p-2 flex justify-end">
-        <button @click="state.activeMessage=null"><inline-svg src="/svg/delete.svg" class="" /></button>
+        <button @click="state.activeThreadId=''"><inline-svg src="/svg/delete.svg" class="" /></button>
       </div>
       <message-thread
-        :key="state.activeMessage.id"
-        :messages="[state.activeMessage,state.activeMessage,state.activeMessage]"
+        :key="state.activeThreadId"
+        :thread-id="state.activeThreadId"
         :labels="labels"
         :account="account"
       />
@@ -199,6 +213,10 @@ function stopResizing() {
 }
 .message-resizer {
   grid-area: resizer;
+}
+/* shadow only needed when splith as splitv has a much more defined separation already */
+.mail-container.splith .message-resizer {
+  box-shadow: 0px -5px 10px 0px rgb(0 0 0 / 10%);
 }
 .message-preview {
   grid-area: preview;

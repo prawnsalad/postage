@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import type { IContact } from '@/types/common';
-import * as Contacts from '@/services/Contacts';
+import AppInstance from '@/services/AppInstance';
 
 const props = defineProps<{
   contact?: IContact,
@@ -13,7 +13,7 @@ const emit = defineEmits([
     'select',
 ]);
 
-const contacts = ref(Contacts.get());
+const contacts = ref(AppInstance.instance().contacts.get());
 const filter = ref('');
 const filteredContacts = computed(() => {
     if (!filter.value) {
