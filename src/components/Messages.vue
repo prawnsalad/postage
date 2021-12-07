@@ -12,13 +12,16 @@ const props = defineProps<{
 
 const messages = ref<Array<IMessageLoader>>([]);
 
-watch(() => props.activeLabel, async () => {
+async function updateLatestMessages() {
     messages.value = [];
     if (props.activeLabel) {
         let res = await getLatest({labelsIds: [props.activeLabel.id]});
         messages.value = [...res.collection]
     }
-});
+}
+
+watch(() => props.activeLabel, updateLatestMessages);
+updateLatestMessages();
 
 /*
 let res = getMessages([

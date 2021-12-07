@@ -21,7 +21,7 @@ body {
 
     grid-template-areas:
         "topcorner toolbar"
-        "sidebar mailcontainer";
+        "sidebar pagecontainer";
 
     grid-template-columns: 300px 1fr;
     grid-template-rows: min-content 1fr;

@@ -29,7 +29,7 @@ async function updateThread() {
 }
 
 updateThread();
-watch([props.messages, props.threadId], updateThread);
+watch(() => props.messages + props.threadId, updateThread);
 
 const showCompose = ref(false);
 const replyTemplate = ref<IMessage>({
