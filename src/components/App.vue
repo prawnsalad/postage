@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
-import { ref, reactive, computed, markRaw } from 'vue'
+import { ref, reactive, watch, markRaw } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 import AppInstance from '@/services/AppInstance';
 import Logo from '@/components/Logo.vue';
@@ -45,10 +46,29 @@ const pageProps = markRaw({
     labels: labels,
 });
 
+
+// Read + set the labels in the address bar when navigating
+const router = useRouter();
+const route = useRoute();
+
+// Calling this sets the address in the router which in return triggers the watch below
 function openLabel(label: ILabel) {
-  state.activeLabel = label;
-  state.activeThreadId = '';
+  let name = label.name.toLowerCase();
+  router.push({
+    name: 'messages',
+    params: {
+      labels: name,
+    }
+  });
 }
+
+watch(() => route.params.labels, () => {
+  let label = labels.value.find(l => l.name.toLowerCase() === route.params.labels);
+  if (label) {
+    state.activeLabel = label;
+    state.activeThreadId = '';
+  }
+});
 </script>
 
 <template>
@@ -57,8 +77,8 @@ function openLabel(label: ILabel) {
     <div class="flex flex-col justify-end">
       <div>{{account.user.primaryAccount}}</div>
       <div>
-        <router-link to="/settings" class="cursor-pointer mr-4 hover:underline">Logout</router-link>
-        <router-link to="/settings" class="cursor-pointer mr-4 hover:underline">Settings</router-link>
+        <router-link :to="{name:'settings'}" class="cursor-pointer mr-4 hover:underline">Logout</router-link>
+        <router-link :to="{name:'settings'}" class="cursor-pointer mr-4 hover:underline">Settings</router-link>
       </div>
     </div>
   </div>
