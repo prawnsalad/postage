@@ -9,10 +9,6 @@ import ComposeMail from '@/components/Compose.vue'
 import Utilities from '@/components/Utilities.vue'
 import { ILabel } from '@/types/common';
 
-// Pages
-import PageSettings from '@/components/pages/settings/Settings.vue';
-import PageMessages from '@/components/pages/messages/Messages.vue';
-
 const userSettings = reactive({
   ui: {
     mailLayout: 'splith', // splith, splitv, splitnone
@@ -23,13 +19,9 @@ const userSettings = reactive({
 const labels = ref<ILabel[]>([]);
 
 const state = reactive<{
-  activePageShow: boolean,
-  activePage: any,
   activeLabel: ILabel | null,
   activeThreadId: string,
 }>({
-  activePageShow: false,
-  activePage: null,
   activeLabel: null,
   activeThreadId: '',
 });
@@ -46,24 +38,15 @@ account.getLabels().then(newLabels => {
   }
 });
 
-state.activePage = markRaw({
-  component: null,
-  props: {
+const pageProps = markRaw({
     state: state,
     userSettings: userSettings,
     account: account,
     labels: labels,
-  },
 });
-
-function showSettings() {
-  state.activePage.component = PageSettings;
-  state.activePageShow = true;
-}
 
 function openLabel(label: ILabel) {
   state.activeLabel = label;
-  state.activePageShow = false;
   state.activeThreadId = '';
 }
 </script>
@@ -74,8 +57,8 @@ function openLabel(label: ILabel) {
     <div class="flex flex-col justify-end">
       <div>{{account.user.primaryAccount}}</div>
       <div>
-        <a class="cursor-pointer mr-4 hover:underline">Logout</a>
-        <a class="cursor-pointer mr-4 hover:underline" @click="showSettings">Settings</a>
+        <router-link to="/settings" class="cursor-pointer mr-4 hover:underline">Logout</router-link>
+        <router-link to="/settings" class="cursor-pointer mr-4 hover:underline">Settings</router-link>
       </div>
     </div>
   </div>
@@ -108,15 +91,10 @@ function openLabel(label: ILabel) {
     <label-list @label:selected="openLabel($event)" :labels="labels" :active-label="state.activeLabel"></label-list>
   </div>
 
-
-  <component
-    v-if="state.activePageShow"
-    :is="state.activePage.component"
-    v-bind="state.activePage.props"
-    @close="state.activePageShow=false"
+  <router-view
+    v-bind="pageProps"
     style="grid-area:pagecontainer;"
-  />
-  <page-messages v-else v-bind="state.activePage.props" style="grid-area:pagecontainer;" />
+  ></router-view>
 
   <compose-mail
     v-if="showNewMail"

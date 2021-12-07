@@ -21,7 +21,7 @@ const avialableLayouts = ['splith', 'splitv', 'splitnone'];
   <section class="flex flex-col p-4">
     <header>
         <span class="text-2xl">Settings</span>
-        <button @click="emit('close')" class="float-right"><inline-svg src="/svg/delete.svg" /></button>
+        <button @click="$router.go(-1)" class="float-right"><inline-svg src="/svg/delete.svg" /></button>
     </header>
 
     <div>
