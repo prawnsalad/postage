@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref, reactive, watch, markRaw } from 'vue';
+import { ref, reactive, watchEffect, markRaw } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import AppInstance from '@/services/AppInstance';
@@ -9,6 +9,9 @@ import LabelList from '@/components/LabelList.vue'
 import ComposeMail from '@/components/Compose.vue'
 import Utilities from '@/components/Utilities.vue'
 import { ILabel } from '@/types/common';
+
+const router = useRouter();
+const route = useRoute();
 
 const userSettings = reactive({
   ui: {
@@ -47,13 +50,10 @@ const pageProps = markRaw({
 });
 
 
-// Read + set the labels in the address bar when navigating
-const router = useRouter();
-const route = useRoute();
 
 // Calling this sets the address in the router which in return triggers the watch below
 function openLabel(label: ILabel) {
-  let name = label.name.toLowerCase();
+  let name = labelNameToUrlForm(label.name);
   router.push({
     name: 'messages',
     params: {
@@ -62,13 +62,25 @@ function openLabel(label: ILabel) {
   });
 }
 
-watch(() => route.params.labels, () => {
-  let label = labels.value.find(l => l.name.toLowerCase() === route.params.labels);
+function labelNameToUrlForm(labelName: string) {
+  // eg. Changes "Custom Label" to customlabel. Safe but also human readable is important. We can
+  //     pretend that "Custom Label" and "CustomLabel" labels conflict doesn't exist as the issue
+  //     that arises will be obvious to the user. Also, can check for that when creating the label.
+  return labelName.replace(/ /g, '').toLowerCase();
+}
+
+// Update the active label/thread based on the URL
+watchEffect(() => {
+  let currentLabelName = labelNameToUrlForm(route.params.labels as string || '');
+  let label = labels.value.find(l => labelNameToUrlForm(l.name) === currentLabelName);
   if (label) {
     state.activeLabel = label;
-    state.activeThreadId = '';
   }
+
+  let newThreadId = (route.params.threadid as string) || '';
+  state.activeThreadId = newThreadId;
 });
+
 </script>
 
 <template>

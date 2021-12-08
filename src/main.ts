@@ -24,7 +24,7 @@ new AppInstance({
 // Some basic routes throughout the app
 const routes = [
     { path: '/', redirect: { name: 'messages' } },
-    { path: '/messages/:labels?', component: PageMessages, name: 'messages' },
+    { path: '/messages/:labels?/:threadid?', component: PageMessages, name: 'messages' },
     { path: '/settings', component: PageSettings, name: 'settings' },
 ];
 const router = VueRouter.createRouter({

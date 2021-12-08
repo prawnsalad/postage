@@ -1,6 +1,7 @@
 <script setup lang="ts">
 
-import { ref, reactive, computed, markRaw } from 'vue';
+import { ref, reactive, computed, watch, watchEffect, markRaw } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import InlineSvg from 'vue-inline-svg';
 import Messages from '@/components/Messages.vue';
 import MessageThread from '@/components/thread/Thread.vue';
@@ -16,6 +17,19 @@ const userSettings = props.userSettings;
 const state = props.state;
 const account = props.account;
 const labels = props.labels;
+
+const router = useRouter();
+const route = useRoute();
+
+function openThread(threadId: string) {
+  router.push({
+    name: 'messages',
+    params: {
+      labels: route.params.labels,
+      threadid: threadId,
+    }
+  });
+}
 
 // Resizing the message list / preview
 const elResizer = ref<HTMLElement>();
@@ -77,7 +91,7 @@ function stopResizing() {
     style="grid-area:mailcontainer;"
   >
     <messages
-        @message:selected="state.activeThreadId=$event.threadId"
+        @message:selected="openThread($event.threadId)"
         :labels="labels"
         :active-label="state.activeLabel"
         :active-thread-id="state.activeThreadId"
@@ -99,7 +113,7 @@ function stopResizing() {
 
     <div class="message-preview overflow-y-auto px-4" v-if="state.activeThreadId">
         <div class="p-2 flex justify-end">
-            <button @click="state.activeThreadId=''"><inline-svg src="/svg/delete.svg" class="" /></button>
+            <button @click="openThread('')"><inline-svg src="/svg/delete.svg" class="" /></button>
         </div>
         <message-thread
             :key="state.activeThreadId"
