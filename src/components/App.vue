@@ -6,7 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import AppInstance from '@/services/AppInstance';
 import Logo from '@/components/Logo.vue';
 import LabelList from '@/components/LabelList.vue'
-import ComposeMail from '@/components/Compose.vue'
+import ComposeMail from '@/components/compose/Compose.vue'
 import Utilities from '@/components/Utilities.vue'
 import { ILabel } from '@/types/common';
 

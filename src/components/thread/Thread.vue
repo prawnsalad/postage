@@ -6,7 +6,7 @@ import Message from './Message.vue';
 import { getThread } from '@/services/MessageLoader';
 import Account from '@/services/Account';
 import Avatar from '@/components/Avatar.vue';
-import Compose from '@/components/Compose.vue';
+import Compose from '@/components/compose/Compose.vue';
 
 import type { IMessage, ILabel } from '@/types/common';
 
