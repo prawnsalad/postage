@@ -3,8 +3,8 @@
 import { ref, reactive, computed, watch, watchEffect, markRaw } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import InlineSvg from 'vue-inline-svg';
-import Messages from '@/components/Messages.vue';
-import MessageThread from '@/components/thread/Thread.vue';
+import Messages from './MessageList.vue';
+import MessageThread from './thread/Thread.vue';
 
 const props = defineProps<{
     userSettings: any,

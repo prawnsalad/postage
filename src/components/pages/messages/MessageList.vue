@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
-import Avatar from './Avatar.vue';
+import Avatar from '@/components/Avatar.vue';
 import { getMessages, getLatest } from '@/services/MessageLoader';
 import type { IMessageLoader, ILabel } from '@/types/common';
 
