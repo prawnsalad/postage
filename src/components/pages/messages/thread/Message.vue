@@ -11,6 +11,8 @@ const props = defineProps<{
 
 const emit = defineEmits([
     'close',
+    'reply',
+    'replyall',
 ]);
 
 const options = reactive({
@@ -63,8 +65,8 @@ const cleanMessageHtml = computed(() => {
         <div class="flex-grow text-neutral-500">To: {{message.to.join(',')}}. Cc: some other</div>
         <div>
           <div class="message-more-actions inline-block hidden">
-            <button class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
-            <button class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
+            <button @click="emit('replyall')" class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
+            <button @click="emit('reply')" class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
           </div>
           <span class="star inline-block mr-2"></span>
           <inline-svg src="/svg/vmenu.svg" class="inline" />

@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
     </header>
 
     <div class="meta">
-        <div class="flex p-2">
+        <div class="flex py-2">
             <label for="compose-to" class="text-sm">To</label>
             <div v-for="(email, emailIdx) in newMessage.to" :key="emailIdx" class="contact-label">
                 {{email}} <a @click="removeToEmail(emailIdx)" class="cursor-pointer">
@@ -178,7 +178,7 @@ onBeforeUnmount(() => {
             </form>
         </div>
 
-        <div class="flex p-2">
+        <div class="flex py-2">
             <label for="compose-cc" class="text-sm">Cc</label>
             <div v-for="(email, emailIdx) in newMessage.cc" :key="emailIdx" class="contact-label">
                 {{email}} <a @click="removeCcEmail(emailIdx)" class="cursor-pointer">
@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
             </form>
         </div>
 
-        <div class="flex p-2" v-if="options.showTopic">
+        <div class="flex py-2" v-if="options.showTopic">
             <label for="compose-topic" class="text-sm">Topic</label>
             <input id="compose-topic" v-model="newMessage.subject" class="ml-3 flex-grow outline-none" />
         </div>
