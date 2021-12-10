@@ -40,7 +40,7 @@ function generateColours() {
 
     let numColours = 10;
     let maxHue = 325; // 0-325 = usable colour hue range. 325+ is just more reds that 0+ starts with
-    let stepSize = Math.floor(maxHue / numColours); 
+    let stepSize = Math.floor(maxHue / numColours);
     for(let hue=0; hue < maxHue; hue=hue+stepSize) {
         colours.push(`hsl(${hue}, ${sat}%, ${lum}%)`);
     }
@@ -57,8 +57,8 @@ function generateColours() {
 
 .avatar {
     border-radius: 30%;
-    width: 45px;
     height: 45px;
+    aspect-ratio: 1 / 1;
     background: red;
 }
 </style>
