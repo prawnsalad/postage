@@ -24,6 +24,6 @@ In a different terminal:
 
 
 
-
-
-
+### How the UI is turning out
+This is obviously rough, but gives a good idea on the UI direction.
+![](https://i.imgur.com/aVBKs65.gif)
