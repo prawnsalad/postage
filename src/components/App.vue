@@ -8,6 +8,7 @@ import Logo from '@/components/Logo.vue';
 import LabelList from '@/components/LabelList.vue'
 import ComposeMail from '@/components/compose/Compose.vue'
 import Utilities from '@/components/Utilities.vue'
+import Search from '@/components/search/Search.vue';
 import { ILabel } from '@/types/common';
 
 const router = useRouter();
@@ -81,6 +82,12 @@ watchEffect(() => {
   state.activeThreadId = newThreadId;
 });
 
+
+function onSearchQuery(queryText: string, query) {
+  console.log('queryText', queryText);
+  console.log('query', query);
+}
+
 </script>
 
 <template>
@@ -98,20 +105,7 @@ watchEffect(() => {
   <div class="header-toolbar flex items-center pl-4 border-b border-neutral-200" style="grid-area:toolbar;">
     <span class="text-3xl w-32 min-w-max">{{state.activeLabel?.name}}</span>
     <div class="flex-grow">
-      <input
-        type="text"
-        class="
-          search
-          p-2 m-3
-          w-60
-          opacity-60
-          border border-neutral-300
-          rounded
-          hover:opacity-100 hover:w-80
-          focus:opacity-100 focus:w-80
-        "
-        placeholder="Search messages"
-      />
+      <search class="m-3" @query="onSearchQuery" />
     </div>
 
     <utilities />
