@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import _ from 'lodash';
 import InlineSvg from 'vue-inline-svg';
 import Message from './Message.vue';
-import { getThread } from '@/services/MessageLoader';
+import { getThread } from '@/services/MessageLoader/MessageLoader';
 import Account from '@/services/Account';
 import Avatar from '@/components/Avatar.vue';
 import Compose from '@/components/compose/Compose.vue';

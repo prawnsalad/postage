@@ -1,5 +1,5 @@
-import loaderIndexdb from './MessageLoaders/Indexdb';
-import loaderServer from './MessageLoaders/Server';
+import loaderIndexdb from './Indexdb';
+import loaderServer from './Server';
 import type { IMessage, IMessageSourceLoader } from '@/types/common';
 
 const l1 = new loaderIndexdb({dbname: 'mailapp'});

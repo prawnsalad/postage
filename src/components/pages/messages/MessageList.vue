@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue';
 import Avatar from '@/components/Avatar.vue';
-import { getLatest } from '@/services/MessageLoader';
+import { getLatest } from '@/services/MessageLoader/MessageLoader';
 import type { IMessage, ILabel } from '@/types/common';
 
 const props = defineProps<{
