@@ -22,14 +22,14 @@ async function updateThread() {
     if (props.messages) {
         messages.value = props.messages;
     } else if (props.threadId) {
-        let res = await getThread(props.threadId);
-        // TODO: Can we use the res.collection message loader directly instead?
-        messages.value = [...res.collection.map(m => m.src)];
+        let res = getThread(props.threadId);
+        await Promise.allSettled(res.sources);
+        messages.value = [...res.messages];
     }
 }
 
 updateThread();
-watch(() => props.messages + props.threadId, updateThread);
+watch(() => (props.messages || '') + (props.threadId || ''), updateThread);
 
 const activeReplies = ref<{[key: string]: IMessage | null}>({});
 function startReply(replyToMessage: IMessage, mainReply: boolean, replyType: 'reply' | 'all') {
@@ -44,6 +44,7 @@ function startReply(replyToMessage: IMessage, mainReply: boolean, replyType: 're
         subject: m.subject,
         bodyText: '',
         bodyHtml: '',
+        snippet: '',
         labels: []
     };
 
@@ -53,11 +54,15 @@ function startReply(replyToMessage: IMessage, mainReply: boolean, replyType: 're
 }
 
 const threadInfo = computed(() => {
+    // Create a map of label IDs for fast label ID -> label lookups
     let labelsMap: {[key: string]: ILabel} = {};
     (props.labels || []).forEach(l => labelsMap[l.id] = l);
 
+    // A list of label IDs that exist in this thread
+    let threadLabelIds = messages.value.map(m => m.labels).reduce((prev, l) => prev.concat(l), []);
+
     let labels:Array<ILabel> = [];
-    for (let labelId of _.uniqBy(messages.value.map(m => m.labels), 'id')) {
+    for (let labelId of _.uniq(threadLabelIds)) {
         if (labelsMap[labelId]) {
             labels.push(labelsMap[labelId]);
         }

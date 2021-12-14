@@ -55,23 +55,46 @@ const apiv1 = {
         },
     },
     messages: {
-        latest: async (labelIds) => {
-            let msgs = messages.filter(m => {
-                for (mLabelId of m.labels) {
-                    if (labelIds.includes(mLabelId)) {
-                        return true;
-                    }
+        // Get the latest threads, and all messages within each thread. size=the number of threads
+        latest: async (labelIds, size=100) => {
+            function areLabelsRequested(labelMap) {
+                for (labelId of labelIds) {
+                    if (labelMap[labelId]) return true;
                 }
-            });
 
-            msgs = msgs.map(m => ({
-                ...m,
-                // bodyText should just be a preview of the body contents. Displayed in the messagelist
-                bodyText: '[preview] ' + m.bodyHtml.substr(0, 100),
-                bodyHtml: '',
-            }));
+                return false;
+            }
 
-            return msgs;
+            // Get the threads that have the most recent messages
+            let latestThreadsMap = Object.create(null);
+            let latestThreads = [];
+            for (let t of threads) {
+                if (areLabelsRequested(t.labels)) {
+                    let newThread = {messages: [], id: t.id, subject: '' };
+                    latestThreads.push(newThread);
+                    latestThreadsMap[t.id] = newThread;
+                }
+                if (latestThreads.length >= size) break;
+            }
+
+            let msgs = messages.filter(msg => !!latestThreadsMap[msg.threadId]);
+            // Only include fields that are useful for a messagelist
+            for (let m of msgs) {
+                latestThreadsMap[m.threadId].subject = m.subject;
+                latestThreadsMap[m.threadId].messages.push({
+                    id: m.id,
+                    threadId: m.threadId,
+                    from: m.from,
+                    to: m.to,
+                    cc: m.cc,
+                    bcc: m.bcc,
+                    labels: m.labels,
+                    recieved: m.recieved,
+                    snippet: m.bodyText.substr(0, 100),
+                });
+            }
+
+            return latestThreads;
         },
         search: async (labelIds, size) => {},
         get: async (messageIds) => {
@@ -106,15 +129,20 @@ function sleep(len) {
 
 
 
-const numThreads = 50;
+const numThreads = 5;
 const labels = [1,2,3,4,5,6,7];
 const messages = [];
+const threads = [];
+const dateEpoch = Date.now();
 for (let i=0; i<100; i++) {
-    messages.push({
+    let threadId = 't' + (i % numThreads).toString();
+    if (!threads.includes(threadId)) {
+        threads.push({id: threadId, messages: [], labels: {}});
+    }
+
+    let message = {
         id: String(i),
-        threadId: (i % numThreads).toString(), // thread IDs can just be the first message ID in the thread (can we
-                        // determine a thread id on message ingestion or should it be determined
-                        // in the UI with the messags it has?)
+        threadId,
         from: 'someone@gmail.com',
         to: ['you@domain.com'],
         cc: [],
@@ -125,6 +153,11 @@ for (let i=0; i<100; i++) {
         labels: [
             labels[Math.floor(Math.random()*labels.length)],
         ],
-        recieved: new Date(),
-    });
+        recieved: new Date(dateEpoch + (i*(10*60*1000))),
+    };
+    messages.push(message);
+
+    let t = threads.find(t=>t.id===threadId);
+    t.messages.push(message.id);
+    message.labels.forEach(l => t.labels[l] = true);
 }

@@ -4,10 +4,10 @@ export interface ILabel {
     custom: boolean
 }
 
-export interface IMessageLoader {
-    id: string,
-    src: IMessage,
-    state: 'loading' | 'loaded' | 'failed'
+export interface IMessageSourceLoader {
+    sources: Promise<any>[],
+    messages: IMessage[],
+    messageMap: {[key: string]: IMessage},
 }
 export interface IMessage {
     id: string,
@@ -19,6 +19,7 @@ export interface IMessage {
     subject: string,
     bodyText: string,
     bodyHtml: string,
+    snippet: string,
     labels: Array<number>
 }
 

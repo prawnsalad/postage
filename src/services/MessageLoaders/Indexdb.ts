@@ -1,12 +1,11 @@
 import * as idb from 'idb';
-import { IObjectSource } from '@/libs/ObjectHydration';
-import type { IMessage } from '@/types/common';
+import type { IMessage, IMessageSourceLoader } from '@/types/common';
 
 interface MessageLoaderIndexdbOptions {
     dbname: string
 }
 
-export default class MessageLoaderIndexdb implements IObjectSource {
+export default class MessageLoaderIndexdb {
     opts: MessageLoaderIndexdbOptions
     db: idb.IDBPDatabase<unknown> | null
 
@@ -35,43 +34,11 @@ export default class MessageLoaderIndexdb implements IObjectSource {
         return this;
     }
 
-    async getLatest(labelIds: number[]) {
-        return [];
+    async getLatest(ctx: IMessageSourceLoader, labelIds: number[]) {
+        // noop. We don't get any latest messages from the local db (yet)
     }
 
-    async getThread(threadId: string) {
-        return [];
-    }
+    async getThread(ctx: IMessageSourceLoader, threadId: string) {
 
-    async getRecords(ids: string[]=[]): Promise<any> {
-        if (!this.db) {
-            throw new Error('Could not get records as db is not set');
-        }
-
-        let waitingRecords: Array<any> = ids.map(async id => {
-            let record = {
-                id,
-                loaded: false,
-                src: {},
-            }
-
-            let val = await this.db!.get('messages', id);
-            if (val !== undefined) {
-                Object.assign(record.src, val);
-                record.loaded = true;
-            }
-
-            return record;
-        });
-
-        let settled = await Promise.allSettled(waitingRecords);
-        let records: Array<object> = [];
-        for (let record of settled) {
-            if (record.status === 'fulfilled') {
-                records.push(record.value);
-            }
-        }
-
-        return records;
     }
 }

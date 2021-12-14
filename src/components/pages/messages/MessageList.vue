@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import Avatar from '@/components/Avatar.vue';
-import { getMessages, getLatest } from '@/services/MessageLoader';
-import type { IMessageLoader, ILabel } from '@/types/common';
+import { getLatest } from '@/services/MessageLoader';
+import type { IMessage, ILabel } from '@/types/common';
 
 const props = defineProps<{
   labels: Array<ILabel>,
@@ -10,36 +10,44 @@ const props = defineProps<{
   activeThreadId: string,
 }>();
 
-const messages = ref<Array<IMessageLoader>>([]);
+const messages = ref<Array<IMessage>>([]);
 
 async function updateLatestMessages() {
     messages.value = [];
     if (props.activeLabel) {
-        let res = await getLatest({labelsIds: [props.activeLabel.id]});
-        messages.value = [...res.collection]
+        let res = getLatest({labelsIds: [props.activeLabel.id]});
+        // TODO: Update messages.value after each individual .sources promise resolves
+        await Promise.allSettled(res.sources)
+        messages.value = [...res.messages]
     }
 }
 
 watch(() => props.activeLabel, updateLatestMessages);
 updateLatestMessages();
 
-/*
-let res = getMessages([
-    // @ts-ignore
-    0,1,2,3,4,5, //6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,
-    // @ts-ignore
-    100, 101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,128,129,130,
-]);
+interface IThreadList {
+  threadId: string,
+  messages: IMessage[],
+}
 
-// Each stage of the message loading can give us different loaded messages, so as each stage
-// completes we can reload the messages here to render then as soon as they arrive.
-// Awaiting Promise.allSettled(res.promises) would wait until everything has completed
-// A stage = loading from the local cache or loading from the server
-res.promises.forEach(async p => {
-    await p;
-    messages.value = [...res.collection];
+const threadedMessages = computed(() => {
+    let threads: IThreadList[] = [];
+    let threadMap: {[key: string]: IThreadList} = Object.create(null);
+    for (let msg of messages.value) {
+        if (threadMap[msg.threadId]) {
+            threadMap[msg.threadId].messages.push(msg);
+        } else {
+            threadMap[msg.threadId] = {
+                threadId: msg.threadId,
+                messages: [msg],
+            };
+            threads.push(threadMap[msg.threadId]);
+        }
+    }
+
+    return threads;
 });
-*/
+
 const options = reactive({
     avatars: true,
 });
@@ -73,6 +81,10 @@ function filteredLabels(msgLabels: Array<number>): Array<ILabel> {
     return ret;
 }
 
+function last<T>(arr: T[]): T {
+  return arr[arr.length - 1];
+}
+
 </script>
 
 <template>
@@ -84,46 +96,43 @@ function filteredLabels(msgLabels: Array<number>): Array<ILabel> {
     </div>
     <div class="flex-grow overflow-y-auto">
         <div
-            v-for="m in messages"
-            :key="m.id"
+            v-for="m in threadedMessages"
+            :key="m.threadId"
             class="
                 flex p-2
                 children:ml-4 children:first:ml-0
                 border-b border-neutral-200
+                select-none cursor-pointer
             "
             :class="{
-                'bg-primary-100': props.activeThreadId === m.src.threadId,
+                'bg-primary-100': props.activeThreadId === m.threadId,
             }"
-            @click="$emit('message:selected', m.src)"
+            @click="$emit('message:selected', m.messages[0])"
         >
             <div class="flex flex-col justify-center">
                 <input type="checkbox" class="m-0" />
             </div>
 
-            <template v-if="m.state === 'loaded'">
-                <avatar v-if="options.avatars" :name="m.src.from"></avatar>
-                <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
-                    <div class="info-top">
-                        <span class="font-bold">{{m.src.from || m.src.from}}</span>
-                        <div class="inline-block ml-4 text-sm">
-                            <span class="star inline-block"></span>
-                            <span
-                                v-for="l in filteredLabels(m.src.labels || [])"
-                                :key="l.id"
-                                class="ml-2 p-1 bg-neutral-100 rounded"
-                            >{{l.name}}</span>
-                        </div>
+            <avatar v-if="options.avatars" :name="last(m.messages).from"></avatar>
+            <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
+                <div class="info-top">
+                    <span class="font-bold">{{last(m.messages).from}}</span>
+                    <span class="text-sm">{{m.messages.length}}</span>
+                    <div class="inline-block ml-4 text-sm">
+                        <span class="star inline-block"></span>
+                        <span
+                            v-for="l in filteredLabels(last(m.messages).labels || [])"
+                            :key="l.id"
+                            class="ml-2 p-1 bg-neutral-100 rounded"
+                        >{{l.name}}</span>
                     </div>
-                    <div class="topic whitespace-nowrap">{{m.src.subject}}</div>
                 </div>
+                <div class="topic whitespace-nowrap">{{last(m.messages).subject}}</div>
+            </div>
 
-                <div>
-                    <span class="text-sm float-right text-neutral-400">00:00:00</span>
-                </div>
-            </template>
-            <template v-else>
-                Loading... {{m.state}}
-            </template>
+            <div>
+                <span class="text-sm float-right text-neutral-400">00:00:00</span>
+            </div>
         </div>
     </div>
   </div>

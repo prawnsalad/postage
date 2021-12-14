@@ -41,6 +41,7 @@ const newMessage = reactive<IMessage>({
     subject: '',
     bodyText: '',
     bodyHtml: '',
+    snippet: '',
 });
 
 // Any pre-set message content

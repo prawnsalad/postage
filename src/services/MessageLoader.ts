@@ -1,12 +1,6 @@
-import { loadObjectsWithIds, IObjectSource } from '@/libs/ObjectHydration';
 import loaderIndexdb from './MessageLoaders/Indexdb';
 import loaderServer from './MessageLoaders/Server';
-import type { IMessage, IMessageLoader } from '@/types/common';
-
-interface IMessageCollectionLoader {
-    promises: Promise<any>[],
-    collection: Array<IMessageLoader>
-}
+import type { IMessage, IMessageSourceLoader } from '@/types/common';
 
 const l1 = new loaderIndexdb({dbname: 'mailapp'});
 await l1.init();
@@ -15,13 +9,9 @@ const l2 = new loaderServer({});
 await l2.init();
 
 const loaders = [
-    l1 as IObjectSource,
-    l2 as IObjectSource,
+    l1,
+    l2,
 ];
-
-export function getMessages(ids: string[]): IMessageCollectionLoader {
-    return loadObjectsWithIds(ids, loaders);
-}
 
 interface IMessageFilters {
     labelsIds?: number[],
@@ -29,27 +19,37 @@ interface IMessageFilters {
     dateFrom?: Date,
 
 }
-export async function getLatest(filters: IMessageFilters={}): Promise<IMessageCollectionLoader> {
-    let messages: IMessage[] = await l2.getLatest(filters.labelsIds || []);
-    return {
-        promises: [Promise.resolve()],
-        collection: messages.map(m => ({
-            id: m.id,
-            src: m,
-            state: 'loaded',
-        })),
+
+export function getLatest(filters: IMessageFilters={}): IMessageSourceLoader {
+    let response: IMessageSourceLoader = {
+        // A promise for each source. Each get resolved as each source completes
+        sources: [],
+        // An array of messages
+        messages: [],
+        // An object mapping {id: message} for faster lookup
+        messageMap: Object.create(null),
     };
+
+    // l1.getLatest(response, filters.labelsIds || []);
+    l2.getLatest(response, filters.labelsIds || []);
+
+    return response;
 }
-export async function getThread(threadId: string): Promise<IMessageCollectionLoader> {
-    let messages: IMessage[] = await l2.getThread(threadId);
-    return {
-        promises: [Promise.resolve()],
-        collection: messages.map(m => ({
-            id: m.id,
-            src: m,
-            state: 'loaded',
-        })),
+
+export function getThread(threadId: string): IMessageSourceLoader {
+    let response: IMessageSourceLoader = {
+        // A promise for each source. Each get resolved as each source completes
+        sources: [],
+        // An array of messages
+        messages: [],
+        // An object mapping {id: message} for faster lookup
+        messageMap: Object.create(null),
     };
+
+    //l1.getThread(response, threadId);
+    l2.getThread(response, threadId);
+
+    return response;
 }
 
 /*
