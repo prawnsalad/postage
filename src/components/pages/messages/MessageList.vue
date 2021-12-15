@@ -48,6 +48,10 @@ const threadedMessages = computed(() => {
     return threads;
 });
 
+function isUnread(messages: IMessage[]): boolean {
+    return !!messages.find(m => !!m.read);
+}
+
 const options = reactive({
     avatars: true,
 });
@@ -116,8 +120,7 @@ function last<T>(arr: T[]): T {
             <avatar v-if="options.avatars" :name="last(m.messages).from"></avatar>
             <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
                 <div class="info-top">
-                    <span class="font-bold">{{last(m.messages).from}}</span>
-                    <span class="text-sm">{{m.messages.length}}</span>
+                    <span :class="{'font-bold': isUnread(m.messages)}">{{last(m.messages).from}}</span>
                     <div class="inline-block ml-4 text-sm">
                         <span class="star inline-block"></span>
                         <span
@@ -127,7 +130,10 @@ function last<T>(arr: T[]): T {
                         >{{l.name}}</span>
                     </div>
                 </div>
-                <div class="topic whitespace-nowrap">{{last(m.messages).subject}}</div>
+                <div class="whitespace-nowrap">
+                    <span v-if="m.messages.length > 1" class="text-sm border-r pr-1 text-neutral-400">{{m.messages.length}}</span>
+                    {{last(m.messages).subject}}
+                </div>
             </div>
 
             <div>

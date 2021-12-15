@@ -90,6 +90,7 @@ const apiv1 = {
                     bcc: m.bcc,
                     labels: m.labels,
                     recieved: m.recieved,
+                    read: m.read,
                     snippet: m.bodyText.substr(0, 100),
                 });
             }
@@ -154,6 +155,7 @@ for (let i=0; i<100; i++) {
             labels[Math.floor(Math.random()*labels.length)],
         ],
         recieved: new Date(dateEpoch + (i*(10*60*1000))),
+        read: Math.random() * 10 > 5 ? Date.now() : 0,
     };
     messages.push(message);
 

@@ -6,7 +6,8 @@ import Avatar from '@/components/Avatar.vue';
 import type { IMessage } from '@/types/common';
 
 const props = defineProps<{
-    message: IMessage
+    message: IMessage,
+    defaultcollapsed?: boolean,
 }>()
 
 const emit = defineEmits([
@@ -17,6 +18,16 @@ const emit = defineEmits([
 
 const options = reactive({
     avatars: true,
+});
+
+const collapsedToggle = ref(!!props.defaultcollapsed);
+const collapsed = computed(() => {
+  // Never collapse unread messages
+  if (!props.message.read) {
+    return false;
+  }
+
+  return collapsedToggle.value;
 });
 
 
@@ -57,11 +68,11 @@ const cleanMessageHtml = computed(() => {
 
     <div class="ml-4 flex-grow">
       <div class="flex">
-        <div class="flex-grow font-bold">{{message.from}}</div>
+        <div class="flex-grow">{{message.from}}</div>
         <div class="text-sm text-neutral-400">No 3, 2021, 8:47 PM</div>
       </div>
 
-      <div class="flex text-sm">
+      <div v-if="!collapsed" class="flex text-sm">
         <div class="flex-grow text-neutral-500">To: {{message.to.join(',')}}. Cc: some other</div>
         <div>
           <div class="message-more-actions inline-block hidden">
@@ -73,8 +84,11 @@ const cleanMessageHtml = computed(() => {
         </div>
       </div>
 
-      <div class="mt-4">
+      <div v-if="!collapsed" class="mt-4">
         <div v-html="cleanMessageHtml" class="overflow-hidden"></div>
+      </div>
+      <div v-else @click="collapsedToggle=!collapsedToggle" class="text-neutral-400 cursor-pointer">
+        {{message.bodyText.replace(/\n/g, ' ')}}
       </div>
     </div>
   </article>

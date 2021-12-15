@@ -45,7 +45,9 @@ function startReply(replyToMessage: IMessage, mainReply: boolean, replyType: 're
         bodyText: '',
         bodyHtml: '',
         snippet: '',
-        labels: []
+        labels: [],
+        recieved: 0,
+        read: 0,
     };
 
     // 'main' = the main reply at the bottom of the thread
@@ -90,9 +92,10 @@ const threadInfo = computed(() => {
         </div>
       </header>
 
-      <div v-for="message in messages" :key="message.id" class="border-b border-neutral-200 py-6">
+      <div v-for="(message, messageIdx) in messages" :key="message.id" class="border-b border-neutral-200 py-6">
         <message
             :message="message"
+            :defaultcollapsed="messageIdx < messages.length - 1"
             @reply="startReply(message, false, 'reply')"
             @replyall="startReply(message, false, 'all')"
         />
@@ -110,7 +113,7 @@ const threadInfo = computed(() => {
         </div>
       </div>
 
-      <div class="mt-6 flex">
+      <div class="my-6 flex">
           <div>
               <avatar :name="account.user.name" :style="[`visibility:${activeReplies.main?'visible':'hidden'}`]" />
           </div>

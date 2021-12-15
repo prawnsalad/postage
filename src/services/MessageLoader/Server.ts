@@ -27,11 +27,13 @@ export default class MessageLoaderServer {
                     to: m.to,
                     cc: m.cc,
                     bcc: m.bcc,
-                    subject: m.subject,
+                    subject: thread.subject,
                     bodyText: '',
                     bodyHtml: '',
                     snippet: m.snippet,
                     labels: m.labels,
+                    recieved: m.recieved,
+                    read: m.read,
                 };
 
                 ctx.messages.push(message);
@@ -60,6 +62,8 @@ export default class MessageLoaderServer {
                 bodyHtml: m.bodyHtml,
                 snippet: m.snippet,
                 labels: m.labels,
+                recieved: m.recieved,
+                read: m.read,
             };
 
             ctx.messages.push(message);

@@ -20,7 +20,9 @@ export interface IMessage {
     bodyText: string,
     bodyHtml: string,
     snippet: string,
-    labels: Array<number>
+    labels: Array<number>,
+    recieved: number,
+    read: number,
 }
 
 export interface IContact {
