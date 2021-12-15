@@ -2,6 +2,7 @@
 import { ref, reactive, computed } from 'vue';
 import DOMPurify from 'dompurify';
 import InlineSvg from 'vue-inline-svg';
+import { fullDate } from '@/libs/Dates';
 import Avatar from '@/components/Avatar.vue';
 import type { IMessage } from '@/types/common';
 
@@ -69,7 +70,7 @@ const cleanMessageHtml = computed(() => {
     <div class="ml-4 flex-grow">
       <div class="flex">
         <div class="flex-grow">{{message.from}}</div>
-        <div class="text-sm text-neutral-400">No 3, 2021, 8:47 PM</div>
+        <div class="text-sm text-neutral-400">{{ fullDate(message.recieved) }}</div>
       </div>
 
       <div v-if="!collapsed" class="flex text-sm">

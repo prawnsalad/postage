@@ -25,12 +25,24 @@ const avialableLayouts = ['splith', 'splitv', 'splitnone'];
     </header>
 
     <div>
-        <label>
-            Split message panes:
-            <select v-model="userSettings.ui.mailLayout">
-                <option v-for="l in avialableLayouts" :key="l" :value="l">{{l}}</option>
-            </select>
-        </label>
+        <div>
+            <label>
+                Split message panes: <br>
+                <select v-model="userSettings.ui.mailLayout">
+                    <option v-for="l in avialableLayouts" :key="l" :value="l">{{l}}</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="mt-8">
+            Time format: <br>
+            <label>
+                12 hour (1:30 pm) <input v-model="userSettings.hourFormat" type="radio" :value="12">
+            </label> <br>
+            <label>
+                24 hour (13:30) <input v-model="userSettings.hourFormat" type="radio" :value="24">
+            </label>
+        </div>
     </div>
   </section>
 </template>

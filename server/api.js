@@ -154,7 +154,7 @@ for (let i=0; i<100; i++) {
         labels: [
             labels[Math.floor(Math.random()*labels.length)],
         ],
-        recieved: new Date(dateEpoch + (i*(10*60*1000))),
+        recieved: new Date(dateEpoch + (i*(10*60*1000))).getTime(),
         read: Math.random() * 10 > 5 ? Date.now() : 0,
     };
     messages.push(message);

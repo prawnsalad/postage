@@ -9,17 +9,11 @@ import LabelList from '@/components/LabelList.vue'
 import ComposeMail from '@/components/compose/Compose.vue'
 import Utilities from '@/components/Utilities.vue'
 import Search from '@/components/search/Search.vue';
+import userSettings from '@/libs/UserSettings';
 import { ILabel } from '@/types/common';
 
 const router = useRouter();
 const route = useRoute();
-
-const userSettings = reactive({
-  ui: {
-    mailLayout: 'splith', // splith, splitv, splitnone
-    maillistSize: 350,
-  },
-});
 
 const labels = ref<ILabel[]>([]);
 

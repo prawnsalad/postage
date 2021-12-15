@@ -2,6 +2,7 @@
 import { ref, reactive, watch, computed } from 'vue';
 import Avatar from '@/components/Avatar.vue';
 import { getLatest } from '@/services/MessageLoader/MessageLoader';
+import { displayDate, fullDate } from '@/libs/Dates';
 import type { IMessage, ILabel } from '@/types/common';
 
 const props = defineProps<{
@@ -131,13 +132,15 @@ function last<T>(arr: T[]): T {
                     </div>
                 </div>
                 <div class="whitespace-nowrap">
-                    <span v-if="m.messages.length > 1" class="text-sm border-r pr-1 text-neutral-400">{{m.messages.length}}</span>
+                    <span v-if="m.messages.length > 1" class="text-xs border-r border-neutral-400 pr-1 text-neutral-400">{{m.messages.length}}</span>
                     {{last(m.messages).subject}}
                 </div>
             </div>
 
             <div>
-                <span class="text-sm float-right text-neutral-400">00:00:00</span>
+                <span class="text-sm float-right text-neutral-400" :title="fullDate(last(m.messages).recieved)">
+                    {{displayDate(last(m.messages).recieved)}}
+                </span>
             </div>
         </div>
     </div>
