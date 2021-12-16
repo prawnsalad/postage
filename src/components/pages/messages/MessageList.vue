@@ -50,7 +50,7 @@ const threadedMessages = computed(() => {
 });
 
 function isUnread(messages: IMessage[]): boolean {
-    return !!messages.find(m => !!m.read);
+    return !!messages.find(m => m.read === 0);
 }
 
 const options = reactive({

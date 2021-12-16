@@ -16,6 +16,7 @@
     "@tiptap/starter-kit": "^2.0.0-beta.140",
     "@tiptap/vue-3": "^2.0.0-beta.80",
     "autoprefixer": "^10.4.0",
+    "date-fns": "^2.27.0",
     "dompurify": "^2.3.3",
     "idb": "^6.1.5",
     "lodash": "^4.17.21",

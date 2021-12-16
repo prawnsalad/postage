@@ -55,6 +55,28 @@ const apiv1 = {
         },
     },
     messages: {
+        // TODO: should be "system" user only
+        ingest: async (incoming) => {
+            // TODO: validate the incoming message before inserting
+            let message = {
+                id: incoming.id,
+                threadId: incoming.threadId || incoming.id,
+                from: incoming.from, // 'some name <some@gmail.com>'
+                to: incoming.to, //['you@domain.com'],
+                cc: incoming.cc, //['you@domain.com'],
+                bcc: incoming.bcc, //['you@domain.com'],
+                subject: incoming.subject, //'RE: RE: FW: help pls',
+                bodyText: incoming.bodyText, //'wooo my body ' + i,
+                bodyHtml: incoming.bodyHtml, //'wooo my <b>body</b> ' + i,
+                labels: [
+                    1,
+                ],
+                recieved: incoming.recieved ? incoming.recieved * 1000 : Date.now(),
+                read: incoming.read ? incoming.read * 1000 : 0,
+            };
+            insertMessage(message);
+
+        },
         // Get the latest threads, and all messages within each thread. size=the number of threads
         latest: async (labelIds, size=100) => {
             function areLabelsRequested(labelMap) {
@@ -135,12 +157,21 @@ const labels = [1,2,3,4,5,6,7];
 const messages = [];
 const threads = [];
 const dateEpoch = Date.now();
-for (let i=0; i<100; i++) {
-    let threadId = 't' + (i % numThreads).toString();
-    if (!threads.includes(threadId)) {
-        threads.push({id: threadId, messages: [], labels: {}});
+
+function insertMessage(m) {
+    if (!threads.find(t => t.id === m.threadId)) {
+        threads.push({id: m.threadId, messages: [], labels: {}});
     }
 
+    messages.push(m);
+
+    let t = threads.find(t=>t.id===m.threadId);
+    t.messages.push(m.id);
+    m.labels.forEach(l => t.labels[l] = true);
+}
+
+for (let i=0; i<100; i++) {
+    let threadId = 't' + (i % numThreads).toString();
     let message = {
         id: String(i),
         threadId,
@@ -157,9 +188,13 @@ for (let i=0; i<100; i++) {
         recieved: new Date(dateEpoch + (i*(10*60*1000))).getTime(),
         read: Math.random() * 10 > 5 ? Date.now() : 0,
     };
-    messages.push(message);
 
-    let t = threads.find(t=>t.id===threadId);
-    t.messages.push(message.id);
-    message.labels.forEach(l => t.labels[l] = true);
+    insertMessage(message);
+}
+
+
+
+function generateId() {
+    // TODO: use uuidv6
+    return Math.floor(Math.random() * 1000000000000).toString(36) + Math.floor(Math.random() * 1000000000000).toString(36);
 }

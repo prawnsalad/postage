@@ -45,19 +45,22 @@ DOMPurify.addHook('afterSanitizeAttributes', (currentNode, hookEvent, config) =>
   return currentNode;
 });
 
+const bodyType = computed(() => {
+  if (props.message.bodyHtml) {
+    return 'html';
+  } else {
+    return 'text';
+  }
+});
+
 const cleanMessageHtml = computed(() => {
   let ret = '';
-  if (props.message.bodyHtml) {
-    try {
-      ret = DOMPurify.sanitize(props.message.bodyHtml, {USE_PROFILES: {html: true}});
-    } catch(err) {
-      console.error(err);
-      ret = '[Error parsing HTML email]';
-    }
-  } else {
-    ret = props.message.bodyText;
+  try {
+    ret = DOMPurify.sanitize(props.message.bodyHtml, {USE_PROFILES: {html: true}});
+  } catch(err) {
+    console.error(err);
+    ret = '[Error parsing HTML email]';
   }
-
   return ret;
 });
 
@@ -86,7 +89,8 @@ const cleanMessageHtml = computed(() => {
       </div>
 
       <div v-if="!collapsed" class="mt-4">
-        <div v-html="cleanMessageHtml" class="overflow-hidden"></div>
+        <div v-if="bodyType === 'html'" v-html="cleanMessageHtml" class="overflow-hidden"></div>
+        <div v-else class="whitespace-pre">{{message.bodyText}}</div>
       </div>
       <div v-else @click="collapsedToggle=!collapsedToggle" class="text-neutral-400 cursor-pointer">
         {{message.bodyText.replace(/\n/g, ' ')}}
