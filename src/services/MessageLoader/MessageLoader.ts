@@ -1,6 +1,6 @@
 import loaderIndexdb from './Indexdb';
 import loaderServer from './Server';
-import type { IMessage, IMessageSourceLoader } from '@/types/common';
+import type { IMessageSourceLoader } from '@/types/common';
 
 const l1 = new loaderIndexdb({dbname: 'mailapp'});
 await l1.init();
@@ -8,10 +8,9 @@ await l1.init();
 const l2 = new loaderServer({});
 await l2.init();
 
-const loaders = [
-    l1,
-    l2,
-];
+// Later loaders in the array can update the earlier ones. ie. changes in [1] takes
+// presidence over [0]
+const loaders = [l1, l2];
 
 interface IMessageFilters {
     labelsIds?: number[],
@@ -30,8 +29,10 @@ export function getLatest(filters: IMessageFilters={}): IMessageSourceLoader {
         messageMap: Object.create(null),
     };
 
-    // l1.getLatest(response, filters.labelsIds || []);
-    l2.getLatest(response, filters.labelsIds || []);
+    for (let l of loaders) {
+        let prom = l.getLatest(response, filters.labelsIds || []);
+        response.sources.push(prom);
+    }
 
     return response;
 }
@@ -46,8 +47,10 @@ export function getThread(threadId: string): IMessageSourceLoader {
         messageMap: Object.create(null),
     };
 
-    //l1.getThread(response, threadId);
-    l2.getThread(response, threadId);
+    for (let l of loaders) {
+        let prom = l.getThread(response, threadId);
+        response.sources.push(prom);
+    }
 
     return response;
 }

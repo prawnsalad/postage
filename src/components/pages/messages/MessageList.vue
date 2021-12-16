@@ -132,7 +132,7 @@ function last<T>(arr: T[]): T {
                     </div>
                 </div>
                 <div class="whitespace-nowrap">
-                    <span v-if="m.messages.length > 1" class="text-xs border-r border-neutral-400 pr-1 text-neutral-400">{{m.messages.length}}</span>
+                    <span v-if="m.messages.length > 1" class="text-xs bg-neutral-100 text-neutral-600 p-1">{{m.messages.length}}</span>
                     {{last(m.messages).subject}}
                 </div>
             </div>

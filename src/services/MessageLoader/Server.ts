@@ -14,9 +14,6 @@ export default class MessageLoaderServer {
     }
 
     async getLatest(ctx: IMessageSourceLoader, labelIds: number[]) {
-        let d = makeDeferred();
-        ctx.sources.push(d);
-
         let [err, threads] = await AppInstance.instance().api.call('messages.latest', labelIds);
         for (let thread of threads) {
             for (let m of thread.messages) {
@@ -40,14 +37,9 @@ export default class MessageLoaderServer {
                 ctx.messageMap[m.id] = message;
             }
         }
-
-        d.resolve();
     }
 
     async getThread(ctx: IMessageSourceLoader, threadId: string) {
-        let d = makeDeferred();
-        ctx.sources.push(d);
-
         let [err, thread] = await AppInstance.instance().api.call('messages.thread', threadId);
         for (let m of thread.messages) {
             let message = {
@@ -69,7 +61,5 @@ export default class MessageLoaderServer {
             ctx.messages.push(message);
             ctx.messageMap[m.id] = message;
         }
-
-        d.resolve();
     }
 }
