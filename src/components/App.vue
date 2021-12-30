@@ -73,7 +73,7 @@ watchEffect(() => {
   }
 
   let newThreadId = (route.params.threadid as string) || '';
-  state.activeThreadId = newThreadId;
+  state.activeThreadId = atob(newThreadId);
 });
 
 

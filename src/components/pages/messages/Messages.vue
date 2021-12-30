@@ -26,7 +26,7 @@ function openThread(threadId: string) {
     name: 'messages',
     params: {
       labels: route.params.labels,
-      threadid: threadId,
+      threadid: btoa(threadId),
     }
   });
 }

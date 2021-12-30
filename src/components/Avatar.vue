@@ -9,6 +9,11 @@ const initials = computed(() => {
     let initial = '';
     let name = props.name || '';
 
+    // Remove the email address if it's included: A Name <email@address.com>
+    if (name.includes('<')) {
+        name = name.substr(0, name.indexOf('<') - 1);
+    }
+
     let parts = name.split(' ');
     if (parts.length === 1) {
         initial = parts[0][0];

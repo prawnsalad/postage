@@ -42,6 +42,19 @@ DOMPurify.addHook('afterSanitizeAttributes', (currentNode, hookEvent, config) =>
   if (currentNode.style.position) {
     currentNode.style.position = '';
   }
+
+  // set all elements owning target to target=_blank
+  if ('target' in currentNode) {
+    currentNode.setAttribute('target', '_blank');
+  }
+  // set non-HTML/MathML links to xlink:show=new
+  if (
+    !currentNode.hasAttribute('target') &&
+    (currentNode.hasAttribute('xlink:href') || currentNode.hasAttribute('href'))
+  ) {
+    currentNode.setAttribute('xlink:show', 'new');
+  }
+
   return currentNode;
 });
 
@@ -71,26 +84,32 @@ const cleanMessageHtml = computed(() => {
     <avatar v-if="options.avatars" :name="message.from"></avatar>
 
     <div class="ml-4 flex-grow">
-      <div class="flex">
+      <div class="flex text-sm">
         <div class="flex-grow">{{message.from}}</div>
-        <div class="text-sm text-neutral-400">{{ fullDate(message.recieved) }}</div>
+        <div class="text-neutral-400 whitespace-nowrap">{{ fullDate(message.recieved) }}</div>
       </div>
 
-      <div v-if="!collapsed" class="flex text-sm">
-        <div class="flex-grow text-neutral-500">To: {{message.to.join(',')}}. Cc: some other</div>
-        <div>
-          <div class="message-more-actions inline-block hidden">
+      <div v-if="!collapsed" class="flex text-sm gap-4">
+        <div class="flex-grow text-neutral-500 min-w-0">
+          <div class="text-neutral-500 overflow-ellipsis overflow-hidden whitespace-nowrap">
+            <span v-if="message.to.length">To: {{message.to.join(',')}}. </span>
+            <span v-if="message.cc.length">Cc: {{message.cc.join(',')}}. </span>
+            <span v-if="message.bcc.length">Bcc: {{message.bcc.join(',')}}. </span>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <div class="message-more-actions hidden">
             <button @click="emit('replyall')" class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
             <button @click="emit('reply')" class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
           </div>
           <span class="star inline-block mr-2"></span>
-          <inline-svg src="/svg/vmenu.svg" class="inline" />
+          <inline-svg src="/svg/vmenu.svg" class="message-more-actions-icon inline" />
         </div>
       </div>
 
       <div v-if="!collapsed" class="mt-4">
         <div v-if="bodyType === 'html'" v-html="cleanMessageHtml" class="overflow-hidden"></div>
-        <div v-else class="whitespace-pre">{{message.bodyText}}</div>
+        <div v-else class="whitespace-pre-wrap">{{message.bodyText}}</div>
       </div>
       <div v-else @click="collapsedToggle=!collapsedToggle" class="text-neutral-400 cursor-pointer">
         {{message.bodyText.replace(/\n/g, ' ')}}
@@ -103,6 +122,9 @@ const cleanMessageHtml = computed(() => {
 
 article:hover .message-more-actions {
   display: inline-block;
+}
+article:hover .message-more-actions-icon {
+  display: none;
 }
 
 .star {

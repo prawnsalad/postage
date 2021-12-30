@@ -24,7 +24,7 @@ async function updateThread() {
     } else if (props.threadId) {
         let res = getThread(props.threadId);
         await Promise.allSettled(res.sources);
-        messages.value = [...res.messages];
+        messages.value = _.orderBy([...res.messages], ['recieved']);
     }
 }
 
