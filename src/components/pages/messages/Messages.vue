@@ -113,7 +113,7 @@ function stopResizing() {
 
     <div class="message-preview overflow-y-auto px-4" v-if="state.activeThreadId">
         <div class="p-2 flex justify-end">
-            <button @click="openThread('')"><inline-svg src="/svg/delete.svg" class="" /></button>
+            <button @click="openThread('')" unstyled><inline-svg src="/svg/delete.svg" class="" /></button>
         </div>
         <message-thread
             :key="state.activeThreadId"

@@ -86,7 +86,7 @@ const cleanMessageHtml = computed(() => {
     <div class="ml-4 flex-grow">
       <div class="flex text-sm">
         <div class="flex-grow">{{message.from}}</div>
-        <div class="text-neutral-400 whitespace-nowrap">{{ fullDate(message.recieved) }}</div>
+        <div class="text-neutral-400 whitespace-nowrap" :title="fullDate(message.recieved, {year:true})">{{ fullDate(message.recieved) }}</div>
       </div>
 
       <div v-if="!collapsed" class="flex text-sm gap-4">
@@ -99,8 +99,8 @@ const cleanMessageHtml = computed(() => {
         </div>
         <div class="flex-shrink-0">
           <div class="message-more-actions hidden">
-            <button @click="emit('replyall')" class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
-            <button @click="emit('reply')" class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
+            <button @click="emit('replyall')" unstyled class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
+            <button @click="emit('reply')" unstyled class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
           </div>
           <span class="star inline-block mr-2"></span>
           <inline-svg src="/svg/vmenu.svg" class="message-more-actions-icon inline" />

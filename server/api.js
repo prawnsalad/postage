@@ -1,15 +1,16 @@
-const { ErrorForClient } = require('./types');
 const { MongoClient } = require('mongodb');
+const _ = require('lodash');
+const { ErrorForClient } = require('./types');
 
 
 const dbClient = new MongoClient('mongodb://root:1234@localhost:27017');
-let dbAccountsCol;
+let dbUsersCol;
 let dbMessagessCol;
 
 (async function() {
     await dbClient.connect();
     const db = dbClient.db('postage');
-    dbAccountsCol = db.collection('accounts');
+    dbUsersCol = db.collection('users'); // {name, password, sources: [{}]}
     dbMessagessCol = db.collection('messages');
 })();
 
@@ -25,6 +26,10 @@ messages.search(labelIds[], query) > {error: null, IMessage[]}
 messages.get(messageIds[]) > {error: null, IMessage[]}
 */
 
+function parseQuery(queryStr) {
+    return {};
+}
+
 const apiv1 = {
     misc: {
         sleep: async () => {
@@ -33,8 +38,9 @@ const apiv1 = {
     },
     account: {
         login: async (accountName, password) => {
-            if (accountName === 'darren@domain.com' && password === '1234') {
-                return {accountname};
+            let user = await dbUsersCol.findOne({name: accountName, password: password}).toArray();
+            if (user) {
+                return {accountname: user.name};
             } else {
                 throw new ErrorForClient('Invalid login', 'bad_auth');
             }
@@ -46,25 +52,72 @@ const apiv1 = {
     },
     labels: {
         get: async () => {
-            // - ids are per-user
-            // - ids are attached to messages
-            // - labels dont get deleted, only marked as deleted. because emails with
-            //   the label ID will still be there.
-            return [
-                { id: 1, name: 'Inbox', custom: false },
-                { id: 2, name: 'Drafts', custom: false },
-                { id: 3, name: 'Sent', custom: false },
-                { id: 4, name: 'Spam', custom: false },
-                { id: 5, name: 'Deleted', custom: false },
-                { id: 6, name: 'Custom Label', custom: true },
-                { id: 7, name: 'Label 70', custom: true },
-            ];
+            let doc = await dbUsersCol.findOne(
+                {_id: '6e651enaa0we0udz'},
+                { projection: { labels: 1 } },
+            );
+
+            let labels = [];
+            for (let label of (doc?.labels || [])) {
+                if (!label.name) continue;
+                labels.push({
+                    id: label._id,
+                    name: label.name,
+                    filter: label.filter.raw,
+                    unread: label.unread,
+                });
+            }
+
+            return labels;
         },
-        add: async (labelName) => {
-            return {id: 4, name: labelName};
+        update: async (labelId, values={}) => {
+            let toUpdate = {};
+            if (values.name) {
+                toUpdate['labels.$.name'] = values.name.trim();
+            }
+            if (values.filter) {
+                toUpdate['labels.$.filter.raw'] = values.filter.trim();
+                toUpdate['labels.$.filter.parsed'] = parseQuery(values.filter.trim());
+            }
+
+            await dbUsersCol.updateOne(
+                {
+                    _id: '6e651enaa0we0udz',
+                    labels: { $elemMatch: {_id: labelId } }
+                },
+                {$set: toUpdate}
+            );
+        },
+        add: async (labelName, values={}) => {
+            // values = same as in update()
+            let query = values.filter || '';
+            let parsedQuery = parseQuery(query);
+
+            let newId = generateId();
+
+            await dbUsersCol.updateOne(
+                {_id: '6e651enaa0we0udz'},
+                {
+                    $addToSet: {
+                        labels: {
+                            _id: newId,
+                            name: labelName,
+                            unread: 0,
+                            filter: { raw: query, parsed: parsedQuery }
+                        },
+                    },
+                }
+            );
+            return {id: newId, name: labelName};
         },
         delete: async(labelId) => {
-            return true;
+            await dbUsersCol.updateOne(
+                {
+                    _id: '6e651enaa0we0udz',
+                    labels: { $elemMatch: {_id: labelId } }
+                },
+                {$set: {[`labels.$.name`]: ''}}
+            );
         },
     },
     messages: {
@@ -107,18 +160,22 @@ const apiv1 = {
                         ...filter
                     },
                 },
+                // {
+                //     $project: {
+                //         recieved: { $max: "$messages.recieved"},
+                //     },
+                // },
+                // {
+                //     $sort: { recieved: -1 },
+                // },
                 {
-                    $project: {
-                        recieved: { $max: "$messages.recieved"},
-                    },
-                },
-                {
-                    $sort: { recieved: -1 },
+                    $sort: { lastRecieved: -1 },
                 },
                 {
                     $limit: size,
                 },
             ]).toArray();
+            //console.log(JSON.stringify(dbLatestThreadIds, null, 2))
             console.timeEnd('dbLatestThreadIds')
 
             console.time('dbThreads')
@@ -155,7 +212,7 @@ const apiv1 = {
 
             let latestThreads = [];
             for (let t of dbThreads) {
-                let newThread = {messages: [], id: t._id, subject: '' };
+                let newThread = {messages: [], id: t._id, subject: '', lastRecieved: 0 };
                 latestThreads.push(newThread);
 
                 for (let m of t.messages) {
@@ -172,10 +229,14 @@ const apiv1 = {
                         read: m.read,
                         snippet: m.bodyText.trim().substr(0, 100).trim(),
                     });
+
+                    if (m.recieved > newThread.lastRecieved) {
+                        newThread.lastRecieved = m.recieved;
+                    }
                 }
             }
 
-            return latestThreads;
+            return _.orderBy(latestThreads, ['lastRecieved'], ['desc']);
 
         },
         search: async (labelIds, size) => {},
@@ -229,4 +290,9 @@ module.exports = {
 
 function sleep(len) {
     return new Promise(r => setTimeout(r, len));
+}
+
+function generateId() {
+    // TODO: use uuidv6
+    return Math.floor(Math.random() * 1000000000000).toString(36) + Math.floor(Math.random() * 1000000000000).toString(36);
 }

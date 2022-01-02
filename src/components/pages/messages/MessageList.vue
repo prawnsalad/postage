@@ -138,7 +138,7 @@ function last<T>(arr: T[]): T {
             </div>
 
             <div>
-                <span class="text-xs float-right text-neutral-400 whitespace-nowrap" :title="fullDate(last(m.messages).recieved)">
+                <span class="text-xs float-right text-neutral-400 whitespace-nowrap" :title="fullDate(last(m.messages).recieved, {year:true})">
                     {{displayDate(last(m.messages).recieved)}}
                 </span>
             </div>

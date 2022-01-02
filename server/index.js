@@ -13,6 +13,13 @@ app.use((ctx, next) => {
     return next();
 });
 
+app.use((ctx, next) => {
+    ctx.state.user = {
+        id: 1,
+    };
+    return next();
+});
+
 const router = new koaRouter();
 router.post('/api/1/', async ctx => {
     const rl = readline.createInterface({

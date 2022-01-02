@@ -119,8 +119,8 @@ const threadInfo = computed(() => {
           </div>
           <div class="flex-grow ml-4">
               <template v-if="!activeReplies.main">
-                  <button @click="startReply(_.last(messages), true, 'all')" class="border border-neutral-400 hover:border-neutral-900 text-neutral-600 py-2 px-4 mr-4"><inline-svg src="/svg/replyall.svg" class="inline" /> Reply to all</button>
-                  <button class="border border-neutral-400 hover:border-neutral-900 text-neutral-600 py-2 px-4 mr-4"><inline-svg src="/svg/forward.svg" class="inline" /> Forward</button>
+                  <button @click="startReply(_.last(messages), true, 'all')" unstyled class="border border-neutral-400 hover:border-neutral-900 text-neutral-600 py-2 px-4 mr-4"><inline-svg src="/svg/replyall.svg" class="inline" /> Reply to all</button>
+                  <button unstyled class="border border-neutral-400 hover:border-neutral-900 text-neutral-600 py-2 px-4 mr-4"><inline-svg src="/svg/forward.svg" class="inline" /> Forward</button>
               </template>
 
                 <compose

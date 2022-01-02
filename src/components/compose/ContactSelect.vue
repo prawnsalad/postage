@@ -69,6 +69,7 @@ function selectCurrent() {
         :id="props.inputId || ''"
         type="text"
         v-model="filter"
+        unstyled
         class="outline-none w-full"
         @keydown.down.prevent="selectNext"
         @keydown.up.prevent="selectPrev"

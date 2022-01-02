@@ -107,7 +107,7 @@ function onSearchQuery(queryText: string, query) {
 
 
   <div class="sidebar px-4 pt-4 bg-neutral-100" style="grid-area:sidebar;">
-    <button class="w-full py-4 mb-8 bg-primary-400" @click="showNewMail=true">New Message</button>
+    <button unstyled class="w-full py-4 mb-8 bg-primary-400" @click="showNewMail=true">New Message</button>
     <label-list @label:selected="openLabel($event)" :labels="labels" :active-label="state.activeLabel"></label-list>
   </div>
 

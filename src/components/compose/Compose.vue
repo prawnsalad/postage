@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
 
         <div class="flex py-2" v-if="options.showTopic">
             <label for="compose-topic" class="text-sm">Topic</label>
-            <input id="compose-topic" v-model="newMessage.subject" class="ml-3 flex-grow outline-none" />
+            <input id="compose-topic" v-model="newMessage.subject" unstyled class="ml-3 flex-grow outline-none" />
         </div>
     </div>
 
@@ -212,50 +212,51 @@ onBeforeUnmount(() => {
                 :editor="editor"
                 v-if="editor"
             >
-                <button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }">
+                <button @click="editor.chain().focus().toggleBold().run()" unstyled :class="{ 'is-active': editor.isActive('bold') }">
                     Bold
                 </button>
-                <button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }">
+                <button @click="editor.chain().focus().toggleItalic().run()" unstyled :class="{ 'is-active': editor.isActive('italic') }">
                     Italic
                 </button>
-                <button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }">
+                <button @click="editor.chain().focus().toggleStrike().run()" unstyled :class="{ 'is-active': editor.isActive('strike') }">
                     Strike
                 </button>
             </bubble-menu>
 
 
             <div class="border-r border-neutral-200 px-2">
-                <button @click="editor.chain().focus().undo().run()">
+                <button @click="editor.chain().focus().undo().run()" unstyled>
                     <inline-svg src="/svg/undo.svg" class="inline" />
                 </button>
-                <button @click="editor.chain().focus().redo().run()">
+                <button @click="editor.chain().focus().redo().run()" unstyled>
                     <inline-svg src="/svg/redo.svg" class="inline" />
                 </button>
             </div>
 
             <div class="border-r border-neutral-200 px-2">
-                <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">
+                <button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" unstyled :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">
                     <span class="text-xs">T</span>T
                 </button>
                 <div class="inline-block">
                     <div v-if="showColourPicker" class="absolute ng-white rounded border border-neutral-300 p-1" style="bottom:100%;" ref="elColourPicker">
                         <colour-picker @selected="onColourSelected($event)" />
                     </div>
-                    <button @click.stop="showColourPicker=!showColourPicker">
+                    <button @click.stop="showColourPicker=!showColourPicker" unstyled>
                         <inline-svg src="/svg/font-color.svg" class="inline" />
                     </button>
                 </div>
-                <button @click="editor.chain().focus().toggleBulletList().run()" :class="{ 'is-active': editor.isActive('bulletList') }">
+                <button @click="editor.chain().focus().toggleBulletList().run()" unstyled :class="{ 'is-active': editor.isActive('bulletList') }">
                     <inline-svg src="/svg/list-bullet.svg" class="inline" />
                 </button>
-                <button @click="editor.chain().focus().toggleOrderedList().run()" :class="{ 'is-active': editor.isActive('orderedList') }">
+                <button @click="editor.chain().focus().toggleOrderedList().run()" unstyled :class="{ 'is-active': editor.isActive('orderedList') }">
                     <inline-svg src="/svg/list-numbered.svg" class="inline" />
                 </button>
             </div>
         </div>
 
-        <button @click="promptClose"><inline-svg src="/svg/trash.svg" class="text-lg mr-2" /></button>
+        <button @click="promptClose" unstyled><inline-svg src="/svg/trash.svg" unstyled class="text-lg mr-2" /></button>
         <button
+            unstyled
             class="bg-primary-400 text-primary-100 px-3 py-1 rounded"
             @click="onSendClick"
         >Send</button>
