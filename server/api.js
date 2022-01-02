@@ -32,12 +32,12 @@ function parseQuery(queryStr) {
 
 const apiv1 = {
     misc: {
-        sleep: async () => {
+        sleep: async (apiCtx) => {
             await sleep(2000);
         },
     },
     account: {
-        login: async (accountName, password) => {
+        login: async (apiCtx, accountName, password) => {
             let user = await dbUsersCol.findOne({name: accountName, password: password}).toArray();
             if (user) {
                 return {accountname: user.name};
@@ -45,15 +45,15 @@ const apiv1 = {
                 throw new ErrorForClient('Invalid login', 'bad_auth');
             }
         },
-        logout: async () => {
+        logout: async (apiCtx) => {
             return true;
         },
-        update: async (accountProps) => {},
+        update: async (apiCtx, accountProps) => {},
     },
     labels: {
-        get: async () => {
+        get: async (apiCtx) => {
             let doc = await dbUsersCol.findOne(
-                {_id: '6e651enaa0we0udz'},
+                {_id: apiCtx.user.id},
                 { projection: { labels: 1 } },
             );
 
@@ -70,7 +70,7 @@ const apiv1 = {
 
             return labels;
         },
-        update: async (labelId, values={}) => {
+        update: async (apiCtx, labelId, values={}) => {
             let toUpdate = {};
             if (values.name) {
                 toUpdate['labels.$.name'] = values.name.trim();
@@ -82,13 +82,13 @@ const apiv1 = {
 
             await dbUsersCol.updateOne(
                 {
-                    _id: '6e651enaa0we0udz',
+                    _id: apiCtx.user.id,
                     labels: { $elemMatch: {_id: labelId } }
                 },
                 {$set: toUpdate}
             );
         },
-        add: async (labelName, values={}) => {
+        add: async (apiCtx, labelName, values={}) => {
             // values = same as in update()
             let query = values.filter || '';
             let parsedQuery = parseQuery(query);
@@ -96,7 +96,7 @@ const apiv1 = {
             let newId = generateId();
 
             await dbUsersCol.updateOne(
-                {_id: '6e651enaa0we0udz'},
+                {_id: apiCtx.user.id},
                 {
                     $addToSet: {
                         labels: {
@@ -110,10 +110,10 @@ const apiv1 = {
             );
             return {id: newId, name: labelName};
         },
-        delete: async(labelId) => {
+        delete: async(apiCtx, labelId) => {
             await dbUsersCol.updateOne(
                 {
-                    _id: '6e651enaa0we0udz',
+                    _id: apiCtx.user.id,
                     labels: { $elemMatch: {_id: labelId } }
                 },
                 {$set: {[`labels.$.name`]: ''}}
@@ -122,7 +122,7 @@ const apiv1 = {
     },
     messages: {
         // TODO: should be "system" user only
-        ingest: async (incoming) => {
+        ingest: async (apiCtx, incoming) => {
             // TODO: validate the incoming message before inserting
             let message = {
                 id: incoming.id,
@@ -146,7 +146,7 @@ const apiv1 = {
 
         },
         // Get the latest threads, and all messages within each thread. size=the number of threads
-        latest: async (labelIds, size=100) => {
+        latest: async (apiCtx, labelIds, size=100) => {
             let filter = {};
             if (labelIds?.length) {
                 filter['messages.labels'] = { $in: labelIds || [] };
@@ -156,7 +156,7 @@ const apiv1 = {
             let dbLatestThreadIds = await dbMessagessCol.aggregate([
                 {
                     $match: {
-                        // accountId: 'aw57t06ajx2x9qt',
+                        accountId: apiCtx.user.id,
                         ...filter
                     },
                 },
@@ -239,13 +239,16 @@ const apiv1 = {
             return _.orderBy(latestThreads, ['lastRecieved'], ['desc']);
 
         },
-        search: async (labelIds, size) => {},
-        get: async (messageIds, opts={}) => {
+        search: async (apiCtx, labelIds, size) => {},
+        get: async (apiCtx, messageIds, opts={}) => {
             return messages.filter(m => messageIds.includes(m.id));
         },
-        async thread(threadId) {
+        async thread(apiCtx, threadId) {
             console.time('dbSingleThread')
-            let dbThread = await dbMessagessCol.findOne({_id: threadId});
+            let dbThread = await dbMessagessCol.findOne({
+                accountId: apiCtx.user.id,
+                _id: threadId
+            });
             console.timeEnd('dbSingleThread')
             if (!dbThread) {
                 throw new ErrorForClient('Thread not found', 'not_found');

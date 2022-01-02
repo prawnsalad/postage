@@ -28,7 +28,10 @@ router.post('/api/1/', async ctx => {
     });
 
     ctx.body = stream.PassThrough();
-    processInput(api.v1, rl, ctx.body);
+    let apiCtx = {
+        user: ctx.state.user,
+    };
+    processInput(apiCtx, api.v1, rl, ctx.body);
 });
 
 app.use(router.routes());
@@ -45,7 +48,7 @@ function getProp(obj, key) {
 }
 
 
-async function processInput(api, streamIn, streamOut) {
+async function processInput(apiCtx, api, streamIn, streamOut) {
     for await (const line of streamIn) {
         let ret = '';
 
@@ -63,7 +66,7 @@ async function processInput(api, streamIn, streamOut) {
                 throw new ErrorForClient('Invalid method name', 'invalid_api_call');
             }
 
-            let response = await runApiCall(api, methodName.trim(), ...methodArgs);
+            let response = await runApiCall(apiCtx, api, methodName.trim(), ...methodArgs);
             ret += JSON.stringify([null, response]) + '\n';
         } catch (err) {
             if (err instanceof ErrorForClient) {
@@ -80,11 +83,11 @@ async function processInput(api, streamIn, streamOut) {
     streamOut.end();
 }
 
-function runApiCall(apiMethods, methodName, ...args) {
+function runApiCall(apiCtx, apiMethods, methodName, ...args) {
     let func = getProp(apiMethods, methodName);
     if (typeof func !== 'function') {
         throw new ErrorForClient('Method not found', 'method_not_found');
     }
 
-    return func(...args);
+    return func(apiCtx, ...args);
 }
