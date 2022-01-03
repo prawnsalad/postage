@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue';
 import AppInstance from '@/services/AppInstance';
 import LabelSettings from './Labels.vue';
+import SourceSettings from './Sources.vue';
 import InlineSvg from 'vue-inline-svg';
 
 const props = defineProps<{
@@ -119,6 +120,7 @@ async function saveLabel() {
     </section>
 
     <label-settings :labels="labels"></label-settings>
+    <source-settings></source-settings>
   </main>
 </template>
 

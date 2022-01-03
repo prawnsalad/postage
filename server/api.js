@@ -30,6 +30,45 @@ function parseQuery(queryStr) {
     return {};
 }
 
+
+// The only values that are allowed to be updated, and their types
+const sourceTypes = {
+    imap: {
+        type: { type: 'string', name: 'type' },
+        name: { type: 'string', name: 'name' },
+        host: { type: 'string', name: 'host' },
+        port: { type: 'number', name: 'port' },
+        tls: { type: 'boolean', name: 'tls' },
+        authUser: { type: 'string', name: 'auth_user' },
+        authPass: { type: 'string', name: 'auth_pass' },
+    },
+};
+function parseClientSourceValues(values, fieldValues) {
+    // TODO: Move this validation to a validation lib
+    let toUpdate = {};
+    for (let prop in values) {
+        let field = fieldValues[prop];
+        if (!field) {
+            continue;
+        }
+
+        let val = values[prop];
+
+        if (
+            field.type === 'string' && typeof val !== 'string' ||
+            field.type === 'number' && typeof val !== 'number' ||
+            field.type === 'boolean' && typeof val !== 'boolean'
+        ) {
+            throw new ErrorForClient(`Invalid type for property '${prop}'`, 'invalid_type');
+        }
+
+        toUpdate[field.name] = val;
+    }
+
+    return toUpdate;
+}
+
+
 const apiv1 = {
     misc: {
         sleep: async (apiCtx) => {
@@ -49,6 +88,97 @@ const apiv1 = {
             return true;
         },
         update: async (apiCtx, accountProps) => {},
+    },
+    source: {
+        async get(apiCtx) {
+            let dbSources = await dbUsersCol.findOne(
+                {_id: apiCtx.user.id},
+                { projection: { sources: 1 } },
+            );
+
+            let sources = [];
+            for (let source of (dbSources?.sources || [])) {
+                sources.push({
+                    id: source._id,
+                    name: source.name,
+                    type: source.type,
+                    host: source.host,
+                    port: source.port,
+                    tls: !!source.tls,
+                    authUser: source.auth_user,
+                    authPass: source.auth_pass,
+                });
+            }
+
+            return sources;
+        },
+
+        async update (apiCtx, sourceId, values={}) {
+            let fieldValues = sourceTypes[values.type];
+            if (!fieldValues) {
+                throw new ErrorForClient('Unknown type of message source', 'unknown_source_type');
+            }
+
+            let toUpdate = parseClientSourceValues(values, fieldValues);
+            // Prepend the db doc field to each property
+            for (let prop in toUpdate) {
+                toUpdate['sources.$.' + prop] = toUpdate[prop];
+                delete toUpdate[prop];
+            }
+
+            if (Object.keys(toUpdate).length > 0) {
+                await dbUsersCol.updateOne(
+                    {
+                        _id: apiCtx.user.id,
+                        sources: { $elemMatch: {_id: sourceId } }
+                    },
+                    {$set: toUpdate}
+                );
+            }
+        },
+
+        async add(apiCtx, name, values) {
+            if (!name.trim) {
+                throw new ErrorForClient('Missing name for the new source', 'missing_params');
+            }
+
+            let fieldValues = sourceTypes[values.type];
+            if (!fieldValues) {
+                throw new ErrorForClient('Unknown type of message source', 'unknown_source_type');
+            }
+
+            let newSource = parseClientSourceValues(values, fieldValues);
+            if (Object.keys(newSource).length === 0) {
+                throw new ErrorForClient('Missing name for the new source', 'missing_params');
+            }
+
+            let newId = generateId();
+            newSource._id = newId;
+            newSource.name = name.trim();
+            newSource.imapUid = '';
+
+            await dbUsersCol.updateOne(
+                {
+                    _id: apiCtx.user.id
+                },
+                {$push: { sources: newSource } }
+            );
+
+            return { id: newId };
+        },
+
+        async delete(apiCtx, sourceId) {
+            await dbUsersCol.updateOne(
+                {
+                    _id: apiCtx.user.id,
+                },
+                {
+                    $pull: {
+                        sources: { _id: sourceId }
+                    }
+                }
+            );
+        },
     },
     labels: {
         get: async (apiCtx) => {
