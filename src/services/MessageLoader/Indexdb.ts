@@ -34,6 +34,10 @@ export default class MessageLoaderIndexdb {
         return this;
     }
 
+    async searchMessages(ctx: IMessageSourceLoader, query: string) {
+        // noop. We don't get any searched messages from the local db (yet)
+    }
+
     async getLatest(ctx: IMessageSourceLoader, labelIds: number[]) {
         // noop. We don't get any latest messages from the local db (yet)
     }

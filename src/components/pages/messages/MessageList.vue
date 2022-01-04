@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watchEffect, computed } from 'vue';
 import Avatar from '@/components/Avatar.vue';
-import { getLatest } from '@/services/MessageLoader/MessageLoader';
+import { getLatest, searchMessages } from '@/services/MessageLoader/MessageLoader';
 import { displayDate, fullDate } from '@/libs/Dates';
 import type { IMessage, ILabel } from '@/types/common';
 
@@ -9,6 +9,7 @@ const props = defineProps<{
   labels: Array<ILabel>,
   activeLabel: ILabel | null,
   activeThreadId: string,
+  searchQuery: string,
 }>();
 
 const messages = ref<Array<IMessage>>([]);
@@ -22,9 +23,26 @@ async function updateLatestMessages() {
         messages.value = [...res.messages]
     }
 }
+async function updateSearchedMessages() {
+    messages.value = [];
+    if (props.searchQuery) {
+        let res = searchMessages(props.searchQuery);
+        // TODO: Update messages.value after each individual .sources promise resolves
+        await Promise.allSettled(res.sources)
+        messages.value = [...res.messages]
+    }
+}
 
-watch(() => props.activeLabel, updateLatestMessages);
-updateLatestMessages();
+// Update our message list as our labels or search queries change
+watchEffect(async () => {
+    let watchTheseProps = [props.activeLabel, props.searchQuery];
+    if (props.searchQuery) {
+        return updateSearchedMessages();
+    } else {
+        return updateLatestMessages();
+    }
+});
+
 
 interface IThreadList {
   threadId: string,

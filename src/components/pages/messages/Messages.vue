@@ -27,7 +27,23 @@ function openThread(threadId: string) {
     params: {
       labels: route.params.labels,
       threadid: btoa(threadId),
-    }
+    },
+    query: {
+      ...route.query,
+      q: route.query.q,
+    },
+  });
+}
+function closeThread() {
+  router.push({
+    name: 'messages',
+    params: {
+      ...route.params,
+      threadid: '',
+    },
+    query: {
+      ...route.query,
+    },
   });
 }
 
@@ -95,6 +111,7 @@ function stopResizing() {
         :labels="labels"
         :active-label="state.activeLabel"
         :active-thread-id="state.activeThreadId"
+        :search-query="state.queryStr"
     />
 
     <div
@@ -113,7 +130,7 @@ function stopResizing() {
 
     <div class="message-preview overflow-y-auto px-4" v-if="state.activeThreadId">
         <div class="p-2 flex justify-end">
-            <button @click="openThread('')" unstyled><inline-svg src="/svg/delete.svg" class="" /></button>
+            <button @click="closeThread" unstyled><inline-svg src="/svg/delete.svg" class="" /></button>
         </div>
         <message-thread
             :key="state.activeThreadId"

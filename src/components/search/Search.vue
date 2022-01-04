@@ -2,20 +2,32 @@
 
 import { ref, watchEffect, computed } from 'vue';
 import _ from 'lodash';
-import { IQueryTag, parseQuery } from '@/libs/TextQueryParser';
+import { IGroupedQueryTags, IQueryTag, parseQuery } from '@/libs/TextQueryParser';
 import TagPreview from './TagPreview.vue';
 
 const emit = defineEmits([
     'query',
 ]);
 
+const props = defineProps<{
+    query?: string,
+}>();
+
+
 const input = ref('');
-const query = ref<IQueryTag[]>([]);
+const query = ref<IGroupedQueryTags[]>([]);
 const showOptions = ref(false);
 
 watchEffect(() => {
+    input.value = props.query || '';
+});
+
+watchEffect(() => {
     try {
-        let parsed = parseQuery(input.value);
+        let parsed = parseQuery(input.value, {
+            groupWords: [],
+            defaultGroupWord: 'and',
+        });
         query.value = parsed;
     } catch (err) {
         console.log('Error parsing query', err);
@@ -34,7 +46,8 @@ const queryParts = computed(() => {
         has: <IQueryTag[]>[],
     };
 
-    for (let tag of query.value) {
+    let queryGroup = query.value[0].tags;
+    for (let tag of queryGroup) {
         if (tag.tag === 'label') ret.labels.push(tag);
         if (tag.tag === 'term' && tag.exclude) ret.excludes.push(tag);
         if (tag.tag === 'term' && !tag.exclude) ret.contains.push(tag);
@@ -62,6 +75,11 @@ function tagsAsText(tags: IQueryTag[]) {
     return out.trim();
 }
 
+function triggerQuery() {
+    showOptions.value = false;
+    emit('query', input.value, query.value);
+}
+
 
 </script>
 
@@ -83,7 +101,7 @@ function tagsAsText(tags: IQueryTag[]) {
             placeholder="Search messages"
             @focus="showOptions=true"
             @blur="showOptions=false"
-            @keypress.enter="emit('query', input, query)"
+            @keypress.enter="triggerQuery"
         />
 
         <div

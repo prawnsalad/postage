@@ -19,6 +19,24 @@ interface IMessageFilters {
 
 }
 
+export function searchMessages(query: string): IMessageSourceLoader {
+    let response: IMessageSourceLoader = {
+        // A promise for each source. Each get resolved as each source completes
+        sources: [],
+        // An array of messages
+        messages: [],
+        // An object mapping {id: message} for faster lookup
+        messageMap: Object.create(null),
+    };
+
+    for (let l of loaders) {
+        let prom = l.searchMessages(response, query);
+        response.sources.push(prom);
+    }
+
+    return response;
+}
+
 export function getLatest(filters: IMessageFilters={}): IMessageSourceLoader {
     let response: IMessageSourceLoader = {
         // A promise for each source. Each get resolved as each source completes

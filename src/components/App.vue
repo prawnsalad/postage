@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref, reactive, watchEffect, markRaw } from 'vue';
+import { ref, reactive, watchEffect, markRaw, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import AppInstance from '@/services/AppInstance';
@@ -20,9 +20,11 @@ const labels = ref<ILabel[]>([]);
 const state = reactive<{
   activeLabel: ILabel | null,
   activeThreadId: string,
+  queryStr: string,
 }>({
   activeLabel: null,
   activeThreadId: '',
+  queryStr: '',
 });
 
 const showNewMail = ref(false);
@@ -64,7 +66,7 @@ function labelNameToUrlForm(labelName: string) {
   return labelName.replace(/ /g, '').toLowerCase();
 }
 
-// Update the active label/thread based on the URL
+// Update the active label/thread/search based on the URL
 watchEffect(() => {
   let currentLabelName = labelNameToUrlForm(route.params.labels as string || '');
   let label = labels.value.find(l => labelNameToUrlForm(l.name) === currentLabelName);
@@ -74,12 +76,23 @@ watchEffect(() => {
 
   let newThreadId = (route.params.threadid as string) || '';
   state.activeThreadId = atob(newThreadId);
+
+  state.queryStr = (route.query.q as string) || '';
 });
 
 
 function onSearchQuery(queryText: string, query) {
   console.log('queryText', queryText);
   console.log('query', query);
+  router.push({
+    name: 'messages',
+    params: {
+      labels: '_search',
+    },
+    query: {
+      q: queryText,
+    }
+  });
 }
 
 </script>
@@ -99,7 +112,7 @@ function onSearchQuery(queryText: string, query) {
   <div class="header-toolbar flex items-center pl-4 border-b border-neutral-200" style="grid-area:toolbar;">
     <span class="text-3xl w-32 min-w-max">{{state.activeLabel?.name}}</span>
     <div class="flex-grow">
-      <search class="m-3" @query="onSearchQuery" />
+      <search class="m-3" @query="onSearchQuery" :query="state.queryStr" />
     </div>
 
     <utilities />

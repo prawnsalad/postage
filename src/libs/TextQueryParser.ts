@@ -69,19 +69,38 @@ export interface IQueryTag {
     exclude: number,
 }
 
+export interface IGroupedQueryTags {
+    type: string,
+    tags: IQueryTag[],
+}
+
 export function parseTokens(tokens: string[], _opts={}) {
     let opts = Object.assign({
         match: ':',
         defaultTag: 'term',
         shortTags: {'@': 'username', '#': 'hashtag'},
+        groupWords: ['or', 'and'],
+        defaultGroupWord: 'and',
     }, _opts);
 
-    let tags: IQueryTag[] = [];
-    for (let tok of tokens) {
-        let tag = {tag: '', value: '', include: 0, exclude: 0};
-        tags.push(tag);
+    let groupedTags: IGroupedQueryTags[] = [{
+        type: opts.defaultGroupWord, tags: []
+    }];
 
-        // total up the +- modifiers. could be used for weighting
+    for (let tok of tokens) {
+        if (opts.groupWords.indexOf(tok) > -1) {
+            groupedTags.push({
+                type: tok,
+                tags: [],
+            });
+
+            continue;
+        }
+
+        let tag = {tag: '', value: '', include: 0, exclude: 0};
+        groupedTags[groupedTags.length - 1].tags.push(tag);
+
+        // total up the +- modifiers. could be used for weighting (ie. +++triple +single)
         while (tok[0] === '+' || tok[0] === '-') {
             if (tok[0] === '+') {
                 tag.include++;
@@ -112,7 +131,7 @@ export function parseTokens(tokens: string[], _opts={}) {
         }
     }
 
-    return tags;
+    return groupedTags;
 }
 
 export function parseQuery(input: string, opts={}) {

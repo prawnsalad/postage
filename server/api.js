@@ -369,7 +369,86 @@ const apiv1 = {
             return _.orderBy(latestThreads, ['lastRecieved'], ['desc']);
 
         },
-        search: async (apiCtx, labelIds, size) => {},
+        search: async (apiCtx, query='', size=100) => {
+            console.time('dbSearchThreadIds')
+            let dbLatestThreadIds = await dbMessagessCol.aggregate([
+                {
+                    $match: {
+                        accountId: apiCtx.user.id,
+                        $text: { $search: query }
+                    },
+                },
+                {
+                    $project: {
+                        lastRecieved: 1,
+                    },
+                },
+                {
+                    $sort: { lastRecieved: -1 },
+                },
+                {
+                    $limit: size,
+                },
+            ]).toArray();
+
+            console.timeEnd('dbSearchThreadIds')
+
+            console.time('dbSearchThreads')
+            let dbThreads = await dbMessagessCol.aggregate([
+                {
+                    $match: {
+                        _id: { $in: dbLatestThreadIds.map(i => i._id) },
+                    },
+                },
+                {
+                    $project: {
+                        'messages.messageId': 1,
+                        'messages.subject': 1,
+                        'messages.from': 1,
+                        'messages.to': 1,
+                        'messages.cc': 1,
+                        'messages.bcc': 1,
+                        'messages.bodyText': 1,
+                        'messages.labels': 1,
+                        'messages.recieved': 1,
+                        'messages.read': 1,
+                        'messages.inReplyTo': 1,
+                        'messages.references': 1,
+                        'messages.attachments': 1,
+                    },
+                },
+            ]).toArray();
+            console.timeEnd('dbSearchThreads')
+
+            let foundThreads = [];
+            for (let t of dbThreads) {
+                let newThread = {messages: [], id: t._id, subject: '', lastRecieved: 0 };
+                foundThreads.push(newThread);
+
+                for (let m of t.messages) {
+                    newThread.subject = m.subject;
+                    newThread.messages.push({
+                        id: m.messageId,
+                        threadId: t._id,
+                        from: m.from.map(i => `${i.name} ${i.address}`).join(''),
+                        to: m.to.map(i => `${i.name} ${i.address}`),
+                        cc: m.cc.map(i => `${i.name} ${i.address}`),
+                        bcc: m.bcc.map(i => `${i.name} ${i.address}`),
+                        labels: m.labels,
+                        recieved: m.recieved,
+                        read: m.read,
+                        snippet: m.bodyText.trim().substr(0, 100).trim(),
+                    });
+
+                    if (m.recieved > newThread.lastRecieved) {
+                        newThread.lastRecieved = m.recieved;
+                    }
+                }
+            }
+
+            return _.orderBy(foundThreads, ['lastRecieved'], ['desc']);
+
+        },
         get: async (apiCtx, messageIds, opts={}) => {
             return messages.filter(m => messageIds.includes(m.id));
         },
