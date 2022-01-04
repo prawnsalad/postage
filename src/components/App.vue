@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import { ref, reactive, watchEffect, markRaw, nextTick } from 'vue';
+import { ref, reactive, watchEffect, markRaw } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import AppInstance from '@/services/AppInstance';

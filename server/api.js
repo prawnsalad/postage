@@ -1,6 +1,8 @@
 const { MongoClient } = require('mongodb');
 const _ = require('lodash');
 const { ErrorForClient } = require('./types');
+const { parseQuery } = require('./TextQueryParser');
+
 
 
 const dbClient = new MongoClient('mongodb://root:1234@localhost:27017');
@@ -26,9 +28,6 @@ messages.search(labelIds[], query) > {error: null, IMessage[]}
 messages.get(messageIds[]) > {error: null, IMessage[]}
 */
 
-function parseQuery(queryStr) {
-    return {};
-}
 
 
 // The only values that are allowed to be updated, and their types
@@ -369,13 +368,57 @@ const apiv1 = {
             return _.orderBy(latestThreads, ['lastRecieved'], ['desc']);
 
         },
-        search: async (apiCtx, query='', size=100) => {
+        search: async (apiCtx, rawQuery='', size=100) => {
+            let searchTerm = '';
+            let query = parseQuery(rawQuery, {
+                groupWords: [],
+                defaultGroupWord: 'and',
+            });
+            let labels = [];
+            let dbFilter = {};
+
+            // Only lookup our labels if we need them
+            if (query[0].tags.find(t => t.tag === 'label')) {
+                let acc = await dbUsersCol.findOne({_id: apiCtx.user.id});
+                labels = acc.labels;
+            }
+
+            // Build up the mongodb text search query. Will end up looking
+            // like: "apple" "delivery" -Quora
+            // Misc things like has:attachment or label:inbox gets built into the dbFilter object
+            for (let tag of query[0].tags) {
+                if (tag.tag === 'term' && tag.exclude) {
+                    searchTerm += `-"${tag.value}" `;
+                }
+                if (tag.tag === 'term' && !tag.exclude) {
+                    searchTerm += `"${tag.value}" `;
+                }
+                if (tag.tag === 'has' && tag.value === 'attachment') {
+                    dbFilter['messages.attachments.0'] = { $exists: true};
+                }
+                if (tag.tag === 'label') {
+                    let label = labels.find(l => l.name.toLowerCase() === tag.value.toLowerCase());
+                    if (!label) {
+                        console.log('couldnt find requested label', tag.value);
+                        // Searching for an non-existing label would return no results so no
+                        // need to even run the query. Return an empty resultset
+                        return [];
+                    }
+
+                    if (!dbFilter['messages.labels']) {
+                        dbFilter['messages.labels'] = { $in: [] };
+                    }
+                    dbFilter['messages.labels']['$in'].push(label._id);
+                }
+            }
+
             console.time('dbSearchThreadIds')
             let dbLatestThreadIds = await dbMessagessCol.aggregate([
                 {
                     $match: {
                         accountId: apiCtx.user.id,
-                        $text: { $search: query }
+                        ...dbFilter,
+                        $text: { $search: searchTerm }
                     },
                 },
                 {

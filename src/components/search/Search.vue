@@ -102,6 +102,7 @@ function triggerQuery() {
             @focus="showOptions=true"
             @blur="showOptions=false"
             @keypress.enter="triggerQuery"
+            @keydown="showOptions=true"
         />
 
         <div
