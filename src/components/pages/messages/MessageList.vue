@@ -3,6 +3,7 @@ import { ref, reactive, watchEffect, computed } from 'vue';
 import Avatar from '@/components/Avatar.vue';
 import { getLatest, searchMessages } from '@/services/MessageLoader/MessageLoader';
 import { displayDate, fullDate } from '@/libs/Dates';
+import { splitAddr } from '@/libs/Misc';
 import type { IMessage, ILabel } from '@/types/common';
 
 const props = defineProps<{
@@ -139,7 +140,7 @@ function last<T>(arr: T[]): T {
             <avatar v-if="options.avatars" :name="last(m.messages).from"></avatar>
             <div class="flex-grow whitespace-nowrap overflow-hidden overflow-ellipsis">
                 <div class="info-top">
-                    <span :class="{'font-bold': isUnread(m.messages)}">{{last(m.messages).from}}</span>
+                    <span :class="{'font-bold': isUnread(m.messages)}">{{splitAddr(last(m.messages).from).display}}</span>
                     <div class="inline-block ml-4 text-sm">
                         <span class="star inline-block"></span>
                         <span

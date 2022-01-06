@@ -100,6 +100,7 @@ const apiv1 = {
                 sources.push({
                     id: source._id,
                     name: source.name,
+                    ingestPing: source.ingestPing,
                     type: source.type,
                     host: source.host,
                     port: source.port,
@@ -349,10 +350,10 @@ const apiv1 = {
                     newThread.messages.push({
                         id: m.messageId,
                         threadId: t._id,
-                        from: m.from.map(i => `${i.name} ${i.address}`).join(''),
-                        to: m.to.map(i => `${i.name} ${i.address}`),
-                        cc: m.cc.map(i => `${i.name} ${i.address}`),
-                        bcc: m.bcc.map(i => `${i.name} ${i.address}`),
+                        from: m.from.map(i => formatAddress(i)).join(', '),
+                        to: m.to.map(i => formatAddress(i)),
+                        cc: m.cc.map(i => formatAddress(i)),
+                        bcc: m.bcc.map(i => formatAddress(i)),
                         labels: m.labels,
                         recieved: m.recieved,
                         read: m.read,
@@ -396,6 +397,30 @@ const apiv1 = {
                 if (tag.tag === 'has' && tag.value === 'attachment') {
                     dbFilter['messages.attachments.0'] = { $exists: true};
                 }
+                if (tag.tag === 'to' && !tag.exclude) {
+                    if (!dbFilter['messages.to.address']) {
+                        dbFilter['messages.to.address'] = { $in: [] };
+                    }
+                    dbFilter['messages.to.address']['$in'].push(tag.value);
+                }
+                if (tag.tag === 'from' && !tag.exclude) {
+                    if (!dbFilter['messages.from.address']) {
+                        dbFilter['messages.from.address'] = { $in: [] };
+                    }
+                    dbFilter['messages.from.address']['$in'].push(tag.value);
+                }
+                if (tag.tag === 'cc' && !tag.exclude) {
+                    if (!dbFilter['messages.cc.address']) {
+                        dbFilter['messages.cc.address'] = { $in: [] };
+                    }
+                    dbFilter['messages.cc.address']['$in'].push(tag.value);
+                }
+                if (tag.tag === 'bcc' && !tag.exclude) {
+                    if (!dbFilter['messages.bcc.address']) {
+                        dbFilter['messages.bcc.address'] = { $in: [] };
+                    }
+                    dbFilter['messages.bcc.address']['$in'].push(tag.value);
+                }
                 if (tag.tag === 'label') {
                     let label = labels.find(l => l.name.toLowerCase() === tag.value.toLowerCase());
                     if (!label) {
@@ -412,13 +437,16 @@ const apiv1 = {
                 }
             }
 
+            if (searchTerm) {
+                dbFilter['$text'] = { $search: searchTerm };
+            }
+
             console.time('dbSearchThreadIds')
             let dbLatestThreadIds = await dbMessagessCol.aggregate([
                 {
                     $match: {
                         accountId: apiCtx.user.id,
                         ...dbFilter,
-                        $text: { $search: searchTerm }
                     },
                 },
                 {
@@ -473,10 +501,10 @@ const apiv1 = {
                     newThread.messages.push({
                         id: m.messageId,
                         threadId: t._id,
-                        from: m.from.map(i => `${i.name} ${i.address}`).join(''),
-                        to: m.to.map(i => `${i.name} ${i.address}`),
-                        cc: m.cc.map(i => `${i.name} ${i.address}`),
-                        bcc: m.bcc.map(i => `${i.name} ${i.address}`),
+                        from: m.from.map(i => formatAddress(i)).join(', '),
+                        to: m.to.map(i => formatAddress(i)),
+                        cc: m.cc.map(i => formatAddress(i)),
+                        bcc: m.bcc.map(i => formatAddress(i)),
                         labels: m.labels,
                         recieved: m.recieved,
                         read: m.read,
@@ -511,10 +539,10 @@ const apiv1 = {
                 msgs.push({
                     id: m.messageId,
                     threadId: m.threadId || '',
-                    from: m.from.map(i => `${i.name} ${i.address}`).join(''),
-                    to: m.to.map(i => `${i.name} ${i.address}`),
-                    cc: m.cc.map(i => `${i.name} ${i.address}`),
-                    bcc: m.bcc.map(i => `${i.name} ${i.address}`),
+                    from: m.from.map(i => formatAddress(i)).join(', '),
+                    to: m.to.map(i => formatAddress(i)),
+                    cc: m.cc.map(i => formatAddress(i)),
+                    bcc: m.bcc.map(i => formatAddress(i)),
                     subject: m.subject, //'RE: RE: FW: help pls',
                     bodyText: m.bodyText, //'wooo my body ' + i,
                     bodyHtml: m.bodyHtml, //'wooo my <b>body</b> ' + i,
@@ -550,4 +578,12 @@ function sleep(len) {
 function generateId() {
     // TODO: use uuidv6
     return Math.floor(Math.random() * 1000000000000).toString(36) + Math.floor(Math.random() * 1000000000000).toString(36);
+}
+
+// Create "Name <address@example.net>" formatted string
+function formatAddress(obj) {
+    let parts = [];
+    if (obj.name) parts.push(obj.name);
+    if (obj.address) parts.push('<' + obj.address + '>');
+    return parts.join(' ');
 }

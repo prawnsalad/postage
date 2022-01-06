@@ -64,7 +64,7 @@ function selectCurrent() {
 </script>
 
 <template>
-  <div>
+  <div class="whitespace-nowrap px-1 select-none">
       <input
         :id="props.inputId || ''"
         type="text"
@@ -99,13 +99,5 @@ function selectCurrent() {
 </template>
 
 <style scoped>
-
-.meta > div {
-    border-bottom: 1px solid lightgray;
-}
-
-.contact-label {
-    @apply ml-3 whitespace-nowrap text-sm border border-neutral-300 rounded px-1;
-}
 
 </style>

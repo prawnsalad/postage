@@ -6,6 +6,7 @@ import InlineSvg from 'vue-inline-svg';
 interface ISource {
     id: string,
     name: string,
+    ingestPing: number,
     type: string,
     host: string,
     port: number,
@@ -26,6 +27,7 @@ const showNewSource = ref(false);
 const newSource = reactive<ISource>({
     id: '',
     name: '',
+    ingestPing: 0,
     type: 'imap',
     host: '',
     port: 993,
@@ -37,6 +39,7 @@ const newSource = reactive<ISource>({
 const editingSource = reactive<ISource>({
     id: '',
     name: '',
+    ingestPing: 0,
     type: '',
     host: '',
     port: 993,
@@ -170,7 +173,15 @@ function clearSourceObject(dest) {
             </form>
 
             <template v-for="source in sources">
-                <div>{{source.name}}</div>
+                <div>
+                    {{source.name}}
+                    <inline-svg
+                        v-if="source.ingestPing"
+                        src="/svg/loader.svg"
+                        class="ml-2 inline-block animate-spin"
+                        title="Loading new messages.."
+                    />
+                </div>
                 <div class="text-neutral-400">{{source.type}}</div>
                 <div class="text-neutral-400">{{source.tls?'tls://':''}}{{source.host}}:{{source.port}}</div>
                 <div>

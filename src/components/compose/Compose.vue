@@ -271,7 +271,7 @@ onBeforeUnmount(() => {
 }
 
 .contact-label {
-    @apply ml-3 whitespace-nowrap text-sm border border-neutral-300 rounded px-1 select-none;
+    @apply ml-3 px-1 text-sm border border-neutral-200 rounded;
 }
 
 .tools button {

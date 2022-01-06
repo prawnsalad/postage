@@ -3,6 +3,7 @@ import { ref, reactive, computed } from 'vue';
 import DOMPurify from 'dompurify';
 import InlineSvg from 'vue-inline-svg';
 import { fullDate } from '@/libs/Dates';
+import { splitAddr } from '@/libs/Misc';
 import Avatar from '@/components/Avatar.vue';
 import type { IMessage } from '@/types/common';
 
@@ -84,17 +85,20 @@ const cleanMessageHtml = computed(() => {
     <avatar v-if="options.avatars" :name="message.from"></avatar>
 
     <div class="ml-4 flex-grow">
-      <div class="flex text-sm">
-        <div class="flex-grow">{{message.from}}</div>
-        <div class="text-neutral-400 whitespace-nowrap" :title="fullDate(message.recieved, {year:true})">{{ fullDate(message.recieved) }}</div>
+      <div class="flex">
+        <div class="flex-grow">
+          <span class="font-bold mr-2">{{splitAddr(message.from).display}}</span>
+          <span class="text-neutral-500 text-sm">{{splitAddr(message.from).address}}</span>
+        </div>
+        <div class="text-neutral-400 text-sm whitespace-nowrap" :title="fullDate(message.recieved, {year:true})">{{ fullDate(message.recieved) }}</div>
       </div>
 
       <div v-if="!collapsed" class="flex text-sm gap-4">
         <div class="flex-grow text-neutral-500 min-w-0">
           <div class="text-neutral-500 overflow-ellipsis overflow-hidden whitespace-nowrap">
-            <span v-if="message.to.length">To: {{message.to.join(',')}}. </span>
-            <span v-if="message.cc.length">Cc: {{message.cc.join(',')}}. </span>
-            <span v-if="message.bcc.length">Bcc: {{message.bcc.join(',')}}. </span>
+            <span v-if="message.to.length">To: {{message.to.map(a=>splitAddr(a).display).join(',')}}. </span>
+            <span v-if="message.cc.length">Cc: {{message.cc.map(a=>splitAddr(a).display).join(',')}}. </span>
+            <span v-if="message.bcc.length">Bcc: {{message.bcc.map(a=>splitAddr(a).display).join(',')}}. </span>
           </div>
         </div>
         <div class="flex-shrink-0">
@@ -107,11 +111,11 @@ const cleanMessageHtml = computed(() => {
         </div>
       </div>
 
-      <div v-if="!collapsed" class="mt-4">
+      <div v-if="!collapsed" class="mt-4 text-lg">
         <div v-if="bodyType === 'html'" v-html="cleanMessageHtml" class="overflow-hidden"></div>
         <div v-else class="whitespace-pre-wrap">{{message.bodyText}}</div>
       </div>
-      <div v-else @click="collapsedToggle=!collapsedToggle" class="text-neutral-400 cursor-pointer">
+      <div v-else @click="collapsedToggle=!collapsedToggle" class="text-neutral-400 text-lg cursor-pointer">
         {{message.bodyText.replace(/\n/g, ' ')}}
       </div>
     </div>
