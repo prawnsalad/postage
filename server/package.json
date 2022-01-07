@@ -14,6 +14,8 @@
     "koa": "^2.13.4",
     "koa-body": "^4.2.0",
     "koa-router": "^10.1.1",
-    "mongodb": "^4.2.2"
+    "mongodb": "^4.2.2",
+    "parse-duration": "^1.0.2",
+    "toml": "^3.0.0"
   }
 }

@@ -12,7 +12,7 @@ let dbMessagessCol;
 (async function() {
     await dbClient.connect();
     const db = dbClient.db('postage');
-    dbUsersCol = db.collection('users'); // {name, password, sources: [{}]}
+    dbUsersCol = db.collection('users');
     dbMessagessCol = db.collection('messages');
 })();
 

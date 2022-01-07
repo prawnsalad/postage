@@ -1,10 +1,30 @@
 const readline = require('readline');
 const stream = require('stream');
+const fs = require('fs');
 const { fork } = require('child_process');
+
+let configRaw = '';
+let config = {};
+try {
+    configRaw = fs.readFileSync(process.env.CONFIG || './config.toml', { encoding: 'utf8'} );
+} catch (err) {
+    console.error('Error reading config file: ' + err.message);
+    process.exit(1);
+}
+
+try {
+    const toml = require('toml');
+    config = global.config = toml.parse(configRaw);
+} catch (e) {
+    console.error(`Error parsing the config file on line ${e.line}, column ${e.column}: ${e.message}`);
+    process.exit(1);
+}
+
 
 const Koa = require('koa');
 const koaRouter = require('koa-router');
 const jwt = require('jsonwebtoken');
+const parseDuration = require('parse-duration')
 const { getHttpBodyStream } = require('./requestStream');
 const api = require('./api');
 const { ErrorForClient } = require('./types');
@@ -18,11 +38,12 @@ app.use((ctx, next) => {
 // Load the session from a JWT cookie and write it back to the client after the route
 // has completed
 app.use(async (ctx, next) => {
-    let jwtSecret = 'secret';
-    let cookieName = 'tok';
+    let jwtSecret = global.config?.cookies?.jwtsecret || 'secret';
+    let cookieName = global.config?.cookies?.name || 'tok';
+    let cookieMaxAge = parseDuration(global.config?.cookies?.maxage || '4w');
+    let cookieSecure = global.config?.cookies?.requirehttps || false;
     
     let cookie = ctx.cookies.get(cookieName);
-
     if (cookie) {
         try {
             let jwtTok = jwt.verify(cookie, jwtSecret);
@@ -45,15 +66,18 @@ app.use(async (ctx, next) => {
             ...ctx.state.session,
         }, jwtSecret);
 
-        let daySec = 1 * 60 * 60 * 24;
         ctx.cookies.set(cookieName, newTok, {
-            // secure: true,
-            maxAge: daySec * 30 * 1000,
+            secure: cookieSecure,
+            maxAge: cookieMaxAge,
         });
     }
 });
 
 const router = new koaRouter();
+router.get('/', async ctx => {
+    ctx.body = '';
+});
+
 router.post('/api/1/', async ctx => {
     const rl = readline.createInterface({
         input: getHttpBodyStream(ctx.req),
@@ -69,9 +93,9 @@ router.post('/api/1/', async ctx => {
 
 app.use(router.routes());
 app.use(router.allowedMethods());
-app.listen(4000);
+app.listen(config?.webserver?.bind_port || 8010, config?.webserver?.bind_address);
 
-// runMessageImporter();
+runMessageImporter();
 
 function getProp(obj, key) {
     let ret = obj || {};
@@ -128,7 +152,7 @@ function runApiCall(apiCtx, apiMethods, methodName, ...args) {
 }
 
 function runMessageImporter() {
-    let child = fork(__dirname + '/imapimport/index.mjs');
+    let child = fork(__dirname + '/imapimport/index.mjs', { env: {config: process.env.config} });
     child.on('close', () => {
         setTimeout(runMessageImporter, 1000);
     })

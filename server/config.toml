@@ -1,0 +1,25 @@
+[webserver]
+bind_address = "0.0.0.0"
+bind_port = 4000
+
+
+
+[database]
+# Mongodb connection string
+connection = "mongodb://root:1234@localhost:27017"
+
+
+
+[cookies]
+# The name of the cookie storing the users session
+name = "tok"
+
+# How long the cookie lasts when unused. Once expired, the user will be logged out
+maxage = "4w"
+
+# If true, users can only use HTTPS
+requirehttps = false
+
+# The secret key for the JWT token in the cookie. Changing this will force everybody to logout
+jwtsecret = "secret"
+
