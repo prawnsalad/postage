@@ -75,15 +75,35 @@ const apiv1 = {
         },
     },
     account: {
+        me: async (apiCtx) => {
+            if (!apiCtx.session.uid) {
+                return {};
+            }
+
+            let user = await dbUsersCol.findOne({_id: apiCtx.session.uid});
+            if (!user) {
+                return {};
+            }
+
+            return {
+                name: user.name,
+                primaryAccount: user.name, // TODO: this should get the main account
+            };
+        },
         login: async (apiCtx, accountName, password) => {
-            let user = await dbUsersCol.findOne({name: accountName, password: password}).toArray();
+            let user = await dbUsersCol.findOne({name: accountName, password: password});
             if (user) {
-                return {accountname: user.name};
+                apiCtx.session.uid = user._id;
+                return {
+                    name: user.name,
+                    primaryAccount: user.name, // TODO: this should get the main account
+                };
             } else {
                 throw new ErrorForClient('Invalid login', 'bad_auth');
             }
         },
         logout: async (apiCtx) => {
+            delete apiCtx.session.uid;
             return true;
         },
         update: async (apiCtx, accountProps) => {},
@@ -91,7 +111,7 @@ const apiv1 = {
     source: {
         async get(apiCtx) {
             let dbSources = await dbUsersCol.findOne(
-                {_id: apiCtx.user.id},
+                {_id: apiCtx.session.uid},
                 { projection: { sources: 1 } },
             );
 
@@ -129,7 +149,7 @@ const apiv1 = {
             if (Object.keys(toUpdate).length > 0) {
                 await dbUsersCol.updateOne(
                     {
-                        _id: apiCtx.user.id,
+                        _id: apiCtx.session.uid,
                         sources: { $elemMatch: {_id: sourceId } }
                     },
                     {$set: toUpdate}
@@ -159,7 +179,7 @@ const apiv1 = {
 
             await dbUsersCol.updateOne(
                 {
-                    _id: apiCtx.user.id
+                    _id: apiCtx.session.uid
                 },
                 {$push: { sources: newSource } }
             );
@@ -170,7 +190,7 @@ const apiv1 = {
         async delete(apiCtx, sourceId) {
             await dbUsersCol.updateOne(
                 {
-                    _id: apiCtx.user.id,
+                    _id: apiCtx.session.uid,
                 },
                 {
                     $pull: {
@@ -183,7 +203,7 @@ const apiv1 = {
     labels: {
         get: async (apiCtx) => {
             let doc = await dbUsersCol.findOne(
-                {_id: apiCtx.user.id},
+                {_id: apiCtx.session.uid},
                 { projection: { labels: 1 } },
             );
 
@@ -212,7 +232,7 @@ const apiv1 = {
 
             await dbUsersCol.updateOne(
                 {
-                    _id: apiCtx.user.id,
+                    _id: apiCtx.session.uid,
                     labels: { $elemMatch: {_id: labelId } }
                 },
                 {$set: toUpdate}
@@ -226,7 +246,7 @@ const apiv1 = {
             let newId = generateId();
 
             await dbUsersCol.updateOne(
-                {_id: apiCtx.user.id},
+                {_id: apiCtx.session.uid},
                 {
                     $addToSet: {
                         labels: {
@@ -243,7 +263,7 @@ const apiv1 = {
         delete: async(apiCtx, labelId) => {
             await dbUsersCol.updateOne(
                 {
-                    _id: apiCtx.user.id,
+                    _id: apiCtx.session.uid,
                     labels: { $elemMatch: {_id: labelId } }
                 },
                 {$set: {[`labels.$.name`]: ''}}
@@ -286,7 +306,7 @@ const apiv1 = {
             let dbLatestThreadIds = await dbMessagessCol.aggregate([
                 {
                     $match: {
-                        accountId: apiCtx.user.id,
+                        accountId: apiCtx.session.uid,
                         ...filter
                     },
                 },
@@ -380,7 +400,7 @@ const apiv1 = {
 
             // Only lookup our labels if we need them
             if (query[0].tags.find(t => t.tag === 'label')) {
-                let acc = await dbUsersCol.findOne({_id: apiCtx.user.id});
+                let acc = await dbUsersCol.findOne({_id: apiCtx.session.uid});
                 labels = acc.labels;
             }
 
@@ -445,7 +465,7 @@ const apiv1 = {
             let dbLatestThreadIds = await dbMessagessCol.aggregate([
                 {
                     $match: {
-                        accountId: apiCtx.user.id,
+                        accountId: apiCtx.session.uid,
                         ...dbFilter,
                     },
                 },
@@ -526,7 +546,7 @@ const apiv1 = {
         async thread(apiCtx, threadId) {
             console.time('dbSingleThread')
             let dbThread = await dbMessagessCol.findOne({
-                accountId: apiCtx.user.id,
+                accountId: apiCtx.session.uid,
                 _id: threadId
             });
             console.timeEnd('dbSingleThread')

@@ -13,6 +13,7 @@ module.exports = {
       danger: colors.red,
       success: colors.green,
       info: colors.yellow,
+      blue: colors.blue,
       white: '#fff',
       black: '#000',
     },

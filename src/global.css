@@ -16,15 +16,7 @@ body {
 }
 
 #app {
-    height: 100%;
-    display: grid;
-
-    grid-template-areas:
-        "topcorner toolbar"
-        "sidebar pagecontainer";
-
-    grid-template-columns: 300px 1fr;
-    grid-template-rows: min-content 1fr;
+    height: 100vh;
 }
 
 a {

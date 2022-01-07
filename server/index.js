@@ -1,8 +1,10 @@
 const readline = require('readline');
 const stream = require('stream');
+const { fork } = require('child_process');
 
 const Koa = require('koa');
 const koaRouter = require('koa-router');
+const jwt = require('jsonwebtoken');
 const { getHttpBodyStream } = require('./requestStream');
 const api = require('./api');
 const { ErrorForClient } = require('./types');
@@ -13,11 +15,42 @@ app.use((ctx, next) => {
     return next();
 });
 
-app.use((ctx, next) => {
-    ctx.state.user = {
-        id: 1,
-    };
-    return next();
+// Load the session from a JWT cookie and write it back to the client after the route
+// has completed
+app.use(async (ctx, next) => {
+    let jwtSecret = 'secret';
+    let cookieName = 'tok';
+    
+    let cookie = ctx.cookies.get(cookieName);
+
+    if (cookie) {
+        try {
+            let jwtTok = jwt.verify(cookie, jwtSecret);
+            ctx.state.session = {
+                ...jwtTok,
+            };
+        } catch (err) {
+            // noop. invalid token
+        }
+    }
+
+    if (!ctx.state.session) {
+        ctx.state.session = {};
+    }
+
+    await next();
+
+    if (typeof ctx.state.session === 'object') {
+        let newTok = jwt.sign({
+            ...ctx.state.session,
+        }, jwtSecret);
+
+        let daySec = 1 * 60 * 60 * 24;
+        ctx.cookies.set(cookieName, newTok, {
+            // secure: true,
+            maxAge: daySec * 30 * 1000,
+        });
+    }
 });
 
 const router = new koaRouter();
@@ -29,14 +62,16 @@ router.post('/api/1/', async ctx => {
 
     ctx.body = stream.PassThrough();
     let apiCtx = {
-        user: ctx.state.user,
+        session: ctx.state.session,
     };
-    processInput(apiCtx, api.v1, rl, ctx.body);
+    await processInput(apiCtx, api.v1, rl, ctx.body);
 });
 
 app.use(router.routes());
 app.use(router.allowedMethods());
 app.listen(4000);
+
+// runMessageImporter();
 
 function getProp(obj, key) {
     let ret = obj || {};
@@ -90,4 +125,11 @@ function runApiCall(apiCtx, apiMethods, methodName, ...args) {
     }
 
     return func(apiCtx, ...args);
+}
+
+function runMessageImporter() {
+    let child = fork(__dirname + '/imapimport/index.mjs');
+    child.on('close', () => {
+        setTimeout(runMessageImporter, 1000);
+    })
 }

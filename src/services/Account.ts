@@ -20,14 +20,48 @@ export default class Account {
     constructor(api: ApiService) {
         this.api = api;
         this.user = {
-            name: 'Darren Whitlen',
-            primaryAccount: 'user@email.com',
+            name: '',
+            primaryAccount: '',
         };
 
         this.accounts = [
             { account: 'user@email.com', send: true, receive: true, },
             { account: 'user@work.org', send: true, receive: true, },
         ];
+    }
+
+    async checkExistingAuth() {
+        let [,ret] = await this.api.call('account.me');
+        if (!ret?.primaryAccount) {
+            return false;
+        }
+
+        this.user.name = ret.name;
+        this.user.primaryAccount = ret.primaryAccount;
+        return true;
+    }
+    async login(username: string, password: string): Promise<boolean> {
+        let [authErr, ret] = await this.api.call('account.login', username, password);
+        if (authErr?.code === 'bad_auth') {
+            return false;
+        }
+        if (authErr) {
+            throw new Error(authErr.message)
+        }
+
+        this.user.name = ret.name;
+        this.user.primaryAccount = ret.primaryAccount;
+        return true;
+    }
+
+    async logout() {
+        await this.api.call('account.logout');
+        this.user.name = '';
+        this.user.primaryAccount = '';
+    }
+
+    isLoggedIn() {
+        return !!this.user.primaryAccount;
     }
 
     async getLabels(): Promise<Array<ILabel>> {
