@@ -142,12 +142,31 @@ async function processInput(apiCtx, api, streamIn, streamOut) {
     streamOut.end();
 }
 
-function runApiCall(apiCtx, apiMethods, methodName, ...args) {
-    let func = getProp(apiMethods, methodName);
-    if (typeof func !== 'function') {
+async function runApiCall(apiCtx, apiMethods, methodName, ...args) {
+    // Extract 'app' and 'app.login' from 'app.login'
+    let namespaceName = methodName.substr(0, methodName.lastIndexOf('.'));
+    let fnName = methodName.substr(methodName.lastIndexOf('.') + 1);
+
+    // Make sure this is a function directly on an object with a _meta property, so prototype
+    // functions can't be called by smart users
+    let namespace = getProp(apiMethods, namespaceName);
+    if (
+        !namespace ||
+        !namespace._meta ||
+        !namespace.hasOwnProperty(fnName) ||
+        typeof namespace[fnName] !== 'function'
+    ) {
         throw new ErrorForClient('Method not found', 'method_not_found');
     }
 
+    // Run any functions before this API method. It may throw an error to send back to the client
+    if (Array.isArray(namespace._meta.runBefore)) {
+        for (let beforeFn of namespace._meta.runBefore) {
+            await beforeFn(apiCtx, namespace, fnName);
+        }
+    }
+
+    let func = namespace[fnName];
     return func(apiCtx, ...args);
 }
 

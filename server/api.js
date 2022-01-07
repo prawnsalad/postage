@@ -68,27 +68,47 @@ function parseClientSourceValues(values, fieldValues) {
 }
 
 
-const apiv1 = {
-    misc: {
-        sleep: async (apiCtx) => {
-            await sleep(2000);
-        },
-    },
-    account: {
-        me: async (apiCtx) => {
-            if (!apiCtx.session.uid) {
-                return {};
-            }
-
-            let user = await dbUsersCol.findOne({_id: apiCtx.session.uid});
-            if (!user) {
-                return {};
-            }
-
-            return {
+async function requireAuth(apiCtx, namespace, methodName) {
+    if (apiCtx.session.uid) {
+        let user = await dbUsersCol.findOne({_id: apiCtx.session.uid});
+        if (user) {
+            apiCtx.user = {
+                id: apiCtx.session.uid,
                 name: user.name,
                 primaryAccount: user.name, // TODO: this should get the main account
             };
+        }
+
+        return;
+    }
+
+    throw new ErrorForClient('needs_auth', 'You must be logged in to call this method');
+}
+
+
+const apiv1 = {
+    app: {
+        _meta: {},
+        status: async (apiCtx) => {
+            let ret = {
+                user: null,
+                config: {
+                    allowRegistration: false,
+                    restrictDomain: ['gmail.com'],
+                },
+            };
+
+            if (apiCtx.session.uid) {
+                let user = await dbUsersCol.findOne({_id: apiCtx.session.uid});
+                if (user) {
+                    ret.user = {
+                        name: user.name,
+                        primaryAccount: user.name, // TODO: this should get the main account
+                    };
+                }
+            }
+
+            return ret;
         },
         login: async (apiCtx, accountName, password) => {
             let user = await dbUsersCol.findOne({name: accountName, password: password});
@@ -102,6 +122,11 @@ const apiv1 = {
                 throw new ErrorForClient('Invalid login', 'bad_auth');
             }
         },
+    },
+    account: {
+        _meta: {
+            runBefore: [requireAuth],
+        },
         logout: async (apiCtx) => {
             delete apiCtx.session.uid;
             return true;
@@ -109,6 +134,9 @@ const apiv1 = {
         update: async (apiCtx, accountProps) => {},
     },
     source: {
+        _meta: {
+            runBefore: [requireAuth],
+        },
         async get(apiCtx) {
             let dbSources = await dbUsersCol.findOne(
                 {_id: apiCtx.session.uid},
@@ -201,6 +229,9 @@ const apiv1 = {
         },
     },
     labels: {
+        _meta: {
+            runBefore: [requireAuth],
+        },
         get: async (apiCtx) => {
             let doc = await dbUsersCol.findOne(
                 {_id: apiCtx.session.uid},
@@ -271,6 +302,9 @@ const apiv1 = {
         },
     },
     messages: {
+        _meta: {
+            runBefore: [requireAuth],
+        },
         // TODO: should be "system" user only
         ingest: async (apiCtx, incoming) => {
             // TODO: validate the incoming message before inserting

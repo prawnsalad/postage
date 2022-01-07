@@ -31,17 +31,18 @@ export default class Account {
     }
 
     async checkExistingAuth() {
-        let [,ret] = await this.api.call('account.me');
-        if (!ret?.primaryAccount) {
+        let [,ret] = await this.api.call('app.status');
+        if (!ret?.user?.primaryAccount) {
             return false;
         }
 
-        this.user.name = ret.name;
-        this.user.primaryAccount = ret.primaryAccount;
+        this.user.name = ret.user.name;
+        this.user.primaryAccount = ret.user.primaryAccount;
         return true;
     }
+
     async login(username: string, password: string): Promise<boolean> {
-        let [authErr, ret] = await this.api.call('account.login', username, password);
+        let [authErr, ret] = await this.api.call('app.login', username, password);
         if (authErr?.code === 'bad_auth') {
             return false;
         }
