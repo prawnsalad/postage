@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import AppInstance from '@/services/AppInstance';
 import InlineSvg from 'vue-inline-svg';
 
@@ -16,6 +16,24 @@ const editingLabel = reactive({
     id: null,
     name: '',
     filter: ''
+});
+
+const account = AppInstance.instance().account;
+const canShowNewLabelForm = computed(() => {
+    if (!account.policy('labels.modify')) {
+        return false;
+    }
+    
+    let max = account.policy('labels.max', 0);
+    if (max === 0) {
+        // unlimited
+        return true;
+    }
+    if (props.labels.value.length >= max) {
+        return false;
+    }
+
+    return true;
 });
 
 function limitInputCharacters(re:RegExp, event) {
@@ -91,10 +109,10 @@ async function saveLabel() {
         <h4 class="font-bold">Labels</h4>
 
         <div class="grid grid-cols-4 gap-x-4 labels-wrap">
-            <div v-if="!newLabel.show" class="col-span-4">
+            <div v-if="canShowNewLabelForm && !newLabel.show" class="col-span-4">
                 <button @click="newLabel.show=true" class="button-sub">New label</button>
             </div>
-            <form v-else @submit.prevent="saveNewLabel" class="col-span-4 border-dashed border border-neutral-400 p-4 my-4 whitespace-nowrap">
+            <form v-else-if="newLabel.show" @submit.prevent="saveNewLabel" class="col-span-4 border-dashed border border-neutral-400 p-4 my-4 whitespace-nowrap">
                 <input
                     v-model="newLabel.name"
                     v-focus
@@ -111,8 +129,8 @@ async function saveLabel() {
                 <div class="text-neutral-400">{{label.unread}} unread</div>
                 <div class="text-neutral-400">{{label.filter}}</div>
                 <div>
-                    <button class="button-sub mr-4" @click="editLabel(label)">edit</button>
-                    <button class="button-sub" @click="deleteLabel(label)">delete</button>
+                    <button v-if="account.policy('labels.modify')" class="button-sub mr-4" @click="editLabel(label)">edit</button>
+                    <button v-if="account.policy('labels.modify')" class="button-sub" @click="deleteLabel(label)">delete</button>
                 </div>
                 <form
                     v-if="editingLabel.id === label.id"

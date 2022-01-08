@@ -96,6 +96,7 @@ const threadInfo = computed(() => {
         <message
             :message="message"
             :defaultcollapsed="messageIdx < messages.length - 1"
+            :can-reply="account.policy('messages.send', true)"
             @reply="startReply(message, false, 'reply')"
             @replyall="startReply(message, false, 'all')"
         />
@@ -113,7 +114,7 @@ const threadInfo = computed(() => {
         </div>
       </div>
 
-      <div class="my-6 flex">
+      <div class="my-6 flex" v-if="account.policy('messages.send', true)">
           <div>
               <avatar :name="account.user.name" :style="[`visibility:${activeReplies.main?'visible':'hidden'}`]" />
           </div>

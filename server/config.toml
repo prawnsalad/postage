@@ -6,7 +6,12 @@ bind_port = 4000
 
 [database]
 # Mongodb connection string
-connection = "mongodb://root:1234@localhost:27017"
+connection = "mongodb://postage:1234@localhost:27017/postage"
+
+
+
+[app]
+allowregistration = true
 
 
 

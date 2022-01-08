@@ -10,6 +10,7 @@ import type { IMessage } from '@/types/common';
 const props = defineProps<{
     message: IMessage,
     defaultcollapsed?: boolean,
+    canReply?: boolean,
 }>()
 
 const emit = defineEmits([
@@ -103,8 +104,8 @@ const cleanMessageHtml = computed(() => {
         </div>
         <div class="flex-shrink-0">
           <div class="message-more-actions hidden">
-            <button @click="emit('replyall')" unstyled class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
-            <button @click="emit('reply')" unstyled class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
+            <button v-if="canReply" @click="emit('replyall')" unstyled class="mr-2"><inline-svg src="/svg/replyall.svg" class="inline" /></button>
+            <button v-if="canReply" @click="emit('reply')" unstyled class="mr-2"><inline-svg src="/svg/reply.svg" class="inline" /></button>
           </div>
           <span class="star inline-block mr-2"></span>
           <inline-svg src="/svg/vmenu.svg" class="message-more-actions-icon inline" />

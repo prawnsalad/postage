@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import AppInstance from '@/services/AppInstance';
 import InlineSvg from 'vue-inline-svg';
+
+const account = AppInstance.instance().account;
 
 interface ISource {
     id: string,
@@ -23,7 +25,24 @@ async function refreshSources() {
 }
 refreshSources();
 
-const showNewSource = ref(false);
+const showNewSourceForm = ref(false);
+const canShowNewSourceForm = computed(() => {
+    if (!account.policy('sources.modify')) {
+        return false;
+    }
+    
+    let max = account.policy('sources.max', 0);
+    if (max === 0) {
+        // unlimited
+        return true;
+    }
+    if (sources.value.length >= max) {
+        return false;
+    }
+
+    return true;
+});
+
 const newSource = reactive<ISource>({
     id: '',
     name: '',
@@ -72,7 +91,7 @@ async function saveNewSource() {
         return;
     }
 
-    showNewSource.value = false;
+    showNewSourceForm.value = false;
     clearSourceObject(newSource);
     refreshSources();
 }
@@ -132,10 +151,10 @@ function clearSourceObject(dest) {
         <h4 class="font-bold">Message sources</h4>
 
         <div class="grid grid-cols-4 gap-x-4 sources-wrap">
-            <div v-if="!showNewSource" class="col-span-4">
-                <button @click="showNewSource=true" class="button-sub">New source</button>
+            <div v-if="!showNewSourceForm && canShowNewSourceForm" class="col-span-4">
+                <button @click="showNewSourceForm=true" class="button-sub">New source</button>
             </div>
-            <form v-else @submit.prevent="saveNewSource" class="col-span-4 border-dashed border border-neutral-400 p-4 my-4 whitespace-nowrap">
+            <form v-else-if="showNewSourceForm" @submit.prevent="saveNewSource" class="col-span-4 border-dashed border border-neutral-400 p-4 my-4 whitespace-nowrap">
                 <input
                     v-model="newSource.name"
                     v-focus
@@ -169,7 +188,7 @@ function clearSourceObject(dest) {
                 </div>
 
                 <button type="submit" class="mr-4">Save</button>
-                <button @click="showNewSource=false" class="button-sub">Cancel</button>
+                <button @click="showNewSourceForm=false" class="button-sub">Cancel</button>
             </form>
 
             <template v-for="source in sources">
@@ -185,8 +204,8 @@ function clearSourceObject(dest) {
                 <div class="text-neutral-400">{{source.type}}</div>
                 <div class="text-neutral-400">{{source.tls?'tls://':''}}{{source.host}}:{{source.port}}</div>
                 <div>
-                    <button class="button-sub mr-4" @click="editSource(source)">edit</button>
-                    <button class="button-sub" @click="deleteSource(source)">delete</button>
+                    <button class="button-sub mr-4" v-if="account.policy('sources.modify')" @click="editSource(source)">edit</button>
+                    <button class="button-sub" v-if="account.policy('sources.modify')" @click="deleteSource(source)">delete</button>
                 </div>
                 <form
                     v-if="editingSource.id === source.id"

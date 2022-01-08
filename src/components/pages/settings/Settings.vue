@@ -18,6 +18,8 @@ const emit = defineEmits([
 
 const avialableLayouts = ['splith', 'splitv', 'splitnone'];
 
+const account = AppInstance.instance().account;
+
 </script>
 
 <template>
@@ -47,7 +49,7 @@ const avialableLayouts = ['splith', 'splitv', 'splitnone'];
     </section>
 
     <label-settings :labels="labels"></label-settings>
-    <source-settings></source-settings>
+    <source-settings v-if="account.policy('sources.show')"></source-settings>
   </main>
 </template>
 

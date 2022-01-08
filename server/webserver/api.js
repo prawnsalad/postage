@@ -36,6 +36,22 @@ messages.search(labelIds[], query) > {error: null, IMessage[]}
 messages.get(messageIds[]) > {error: null, IMessage[]}
 */
 
+const POLICY_DEFAULT = {
+    sources: {
+        show: true,
+        modify: true,
+        max: 0,
+        types: ['imap'],
+    },
+    labels: {
+        modify: true,
+        max: 0,
+    },
+    messages: {
+        send: true,
+        attach: true,
+    },
+};
 
 
 // The only values that are allowed to be updated, and their types
@@ -101,7 +117,7 @@ const apiv1 = {
             let ret = {
                 user: null,
                 config: {
-                    allowRegistration: false,
+                    allowRegistration: !!global.config?.app?.allowregistration,
                     restrictDomain: ['gmail.com'],
                 },
             };
@@ -112,6 +128,12 @@ const apiv1 = {
                     ret.user = {
                         name: user.name,
                         primaryAccount: user.name, // TODO: this should get the main account
+                        policies: [
+                            // last policy entry wins
+                            POLICY_DEFAULT,
+                            { }, // group policy
+                            user.policies || {},
+                        ],
                     };
                 }
             }
@@ -125,6 +147,12 @@ const apiv1 = {
                 return {
                     name: user.name,
                     primaryAccount: user.name, // TODO: this should get the main account
+                    policies: [
+                        // last policy entry wins
+                        POLICY_DEFAULT,
+                        { }, // group policy
+                        user.policies || {},
+                    ],
                 };
             } else {
                 throw new ErrorForClient('Invalid login', 'bad_auth');

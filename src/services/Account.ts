@@ -1,5 +1,6 @@
 import type { ILabel } from '@/types/common';
 import ApiService from './Api';
+import Policies from './Policies';
 
 interface IUser {
     name: string,
@@ -16,6 +17,7 @@ export default class Account {
     api: ApiService;
     user: IUser;
     accounts: Array<IAccount>;
+    policies: Policies;
 
     constructor(api: ApiService) {
         this.api = api;
@@ -28,6 +30,8 @@ export default class Account {
             { account: 'user@email.com', send: true, receive: true, },
             { account: 'user@work.org', send: true, receive: true, },
         ];
+
+        this.policies = new Policies();
     }
 
     async checkExistingAuth() {
@@ -38,6 +42,10 @@ export default class Account {
 
         this.user.name = ret.user.name;
         this.user.primaryAccount = ret.user.primaryAccount;
+        if (ret.user.policies) {
+            this.policies.setPolicies(ret.user.policies);
+        }
+
         return true;
     }
 
@@ -52,6 +60,11 @@ export default class Account {
 
         this.user.name = ret.name;
         this.user.primaryAccount = ret.primaryAccount;
+
+        if (ret.policies) {
+            this.policies.setPolicies(ret.user.policies);
+        }
+
         return true;
     }
 
@@ -68,5 +81,9 @@ export default class Account {
     async getLabels(): Promise<Array<ILabel>> {
         let [err, labels] = await this.api.call('labels.get');
         return labels;
+    }
+
+    policy(key: string, def?: any): any {
+        return this.policies.get(key, def);
     }
 }
