@@ -23,3 +23,9 @@ requirehttps = false
 # The secret key for the JWT token in the cookie. Changing this will force everybody to logout
 jwtsecret = "secret"
 
+
+
+[imapimporter]
+# Run the IMAP message importer background process
+# Can also be run standalone via `node index.js --imap`
+enabled = true
