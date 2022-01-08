@@ -10,8 +10,15 @@ let dbMessagesCol;
 
 (async function() {
     dbClient = new MongoClient(global.config.database?.connection || '');
-    await dbClient.connect();
-    db = dbClient.db('postage');
+    try {
+        await dbClient.connect();
+    } catch (err) {
+        console.error('Error connecting to the database:', err.message);
+        process.exit(1);
+    }
+
+    console.log('Connected to database');
+    db = dbClient.db();
     dbUsersCol = db.collection('users');
     dbMessagesCol = db.collection('messages');
 

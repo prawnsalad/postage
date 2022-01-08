@@ -4,14 +4,22 @@ const { ErrorForClient } = require('./types');
 const { parseQuery } = require('./TextQueryParser');
 
 
-
-const dbClient = new MongoClient('mongodb://root:1234@localhost:27017');
+let dbClient;
+let db;
 let dbUsersCol;
 let dbMessagessCol;
 
 (async function() {
-    await dbClient.connect();
-    const db = dbClient.db('postage');
+    dbClient = new MongoClient(global.config.database?.connection || '');
+    try {
+        await dbClient.connect();
+    } catch (err) {
+        console.error('Error connecting to the database:', err.message);
+        process.exit(1);
+    }
+
+    console.log('Connected to database')
+    db = dbClient.db();
     dbUsersCol = db.collection('users');
     dbMessagessCol = db.collection('messages');
 })();
