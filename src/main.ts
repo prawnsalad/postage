@@ -71,7 +71,7 @@ router.beforeEach((to, from) => {
     }
 });
 
-AppInstance.instance().account.checkExistingAuth().then(() => {
+appInstance.checkStatus().then(() => {
     const app = createApp(App);
     app.use(router);
     app.directive('focus', directiveFocus);

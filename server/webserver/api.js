@@ -53,6 +53,12 @@ const POLICY_DEFAULT = {
     },
 };
 
+const APP_POLICY = {
+    registration: {
+        enabled: true,
+    }
+};
+
 
 // The only values that are allowed to be updated, and their types
 const sourceTypes = {
@@ -116,10 +122,7 @@ const apiv1 = {
         status: async (apiCtx) => {
             let ret = {
                 user: null,
-                config: {
-                    allowRegistration: !!global.config?.app?.allowregistration,
-                    restrictDomain: ['gmail.com'],
-                },
+                policy: APP_POLICY,
             };
 
             if (apiCtx.session.uid) {

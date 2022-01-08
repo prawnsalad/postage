@@ -1,8 +1,5 @@
 import _ from 'lodash';
-
-interface IPolicy {
-    [key: string]: any
-}
+import { IPolicy } from '@/types/common';
 
 export default class Account {
     policies: IPolicy[];

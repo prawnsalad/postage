@@ -36,3 +36,7 @@ export interface IComposeOptions {
     showHeader: boolean,
     focus: 'to' | 'cc' | 'body'
 }
+
+export interface IPolicy {
+    [key: string]: any
+}

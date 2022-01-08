@@ -34,16 +34,15 @@ export default class Account {
         this.policies = new Policies();
     }
 
-    async checkExistingAuth() {
-        let [,ret] = await this.api.call('app.status');
-        if (!ret?.user?.primaryAccount) {
+    async checkExistingAuthFromAppStatus(status: any) {
+        if (!status.user?.primaryAccount) {
             return false;
         }
 
-        this.user.name = ret.user.name;
-        this.user.primaryAccount = ret.user.primaryAccount;
-        if (ret.user.policies) {
-            this.policies.setPolicies(ret.user.policies);
+        this.user.name = status.user.name;
+        this.user.primaryAccount = status.user.primaryAccount;
+        if (status.user.policies) {
+            this.policies.setPolicies(status.user.policies);
         }
 
         return true;
@@ -62,7 +61,7 @@ export default class Account {
         this.user.primaryAccount = ret.primaryAccount;
 
         if (ret.policies) {
-            this.policies.setPolicies(ret.user.policies);
+            this.policies.setPolicies(ret.policies);
         }
 
         return true;
