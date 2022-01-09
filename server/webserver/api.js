@@ -1,4 +1,5 @@
 const { MongoClient } = require('mongodb');
+const bcrypt = require('bcryptjs');
 const _ = require('lodash');
 const { ErrorForClient } = require('./types');
 const { parseQuery } = require('./TextQueryParser');
@@ -145,8 +146,12 @@ const apiv1 = {
             return ret;
         },
         login: async (apiCtx, accountName, password) => {
-            let user = await dbUsersCol.findOne({name: accountName, password: password});
+            let user = await dbUsersCol.findOne({name: accountName});
             if (user) {
+                if (!bcrypt.compareSync(password, user.password)) {
+                    throw new ErrorForClient('Invalid login', 'bad_auth');
+                }
+
                 apiCtx.session.uid = user._id;
                 return {
                     name: user.name,
@@ -176,6 +181,7 @@ const apiv1 = {
             let newUser = models.User({
                 _id: generateId(),
                 ...newVals,
+                password: bcrypt.hashSync(newVals.password),
             });
             await dbUsersCol.insertOne(newUser);
 
