@@ -5,6 +5,8 @@ import { useRoute, useRouter } from 'vue-router';
 
 import AppInstance from '@/services/AppInstance';
 import Logo from '@/components/Logo.vue';
+import RegisterUserVue from './registeruser/RegisterUser.vue';
+import RegisterUser from './registeruser/RegisterUser.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -16,6 +18,8 @@ const loginForm = reactive({
   password: '',
   completed: false,
 });
+
+const showRegisterUser = ref(false);
 
 function sleep(l) {
   return new Promise(r => setTimeout(r, l));
@@ -47,7 +51,14 @@ async function onLoginSubmit() {
   }
 }
 
-if (AppInstance.instance().account.isLoggedIn()) {
+function onRegisteredComplete(event) {
+  loginForm.username = event.name;
+  loginForm.password = event.password;
+  showRegisterUser.value = false;
+}
+
+const appInstance = AppInstance.instance();
+if (appInstance.account.isLoggedIn()) {
   router.push({name: 'messages'});
 }
 
@@ -59,7 +70,11 @@ if (AppInstance.instance().account.isLoggedIn()) {
     <div class="p-28 text-lg">
       <logo class="mb-12" />
 
-      <form @submit.prevent="onLoginSubmit" :class="{completed: loginForm.completed}">
+      <form
+        v-if="!showRegisterUser"
+        @submit.prevent="onLoginSubmit"
+        :class="{completed: loginForm.completed}"
+      >
         <div class="slideaway overflow-hidden">
           <div v-if="loginForm.errorMessage" class="text-danger-800">
             {{loginForm.errorMessage}}
@@ -79,7 +94,16 @@ if (AppInstance.instance().account.isLoggedIn()) {
         <button type="submit" :disabled="loginForm.loading!==0 || !loginForm.username || !loginForm.password">
           {{loginForm.loading || loginForm.completed ? 'Signing in..' : 'Sign in'}}
         </button>
+
+        <div v-if="appInstance.policy('registration.enabled', true)" class="mt-16 text-base">
+          <a @click="showRegisterUser=true">Create an account</a>
+        </div>
       </form>
+      <register-user
+        v-else
+        @close="showRegisterUser=false"
+        @registered="onRegisteredComplete"
+      ></register-user>
     </div>
   </div>
 </template>

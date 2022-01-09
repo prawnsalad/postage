@@ -2,6 +2,7 @@ const { MongoClient } = require('mongodb');
 const _ = require('lodash');
 const { ErrorForClient } = require('./types');
 const { parseQuery } = require('./TextQueryParser');
+const models = require('./dbModels');
 
 
 let dbClient;
@@ -72,26 +73,26 @@ const sourceTypes = {
         authPass: { type: 'string', name: 'auth_pass' },
     },
 };
-function parseClientSourceValues(values, fieldValues) {
+function parseClientSourceValuesToDbValues(values, fieldValues) {
     // TODO: Move this validation to a validation lib
     let toUpdate = {};
-    for (let prop in values) {
+    for (let prop in fieldValues) {
         let field = fieldValues[prop];
-        if (!field) {
-            continue;
+        let userVal =  values[prop];
+
+        if (userVal === undefined && field.required) {
+            throw new ErrorForClient(`Missing required property '${prop}'`, 'missing_property');
         }
 
-        let val = values[prop];
-
         if (
-            field.type === 'string' && typeof val !== 'string' ||
-            field.type === 'number' && typeof val !== 'number' ||
-            field.type === 'boolean' && typeof val !== 'boolean'
+            field.type === 'string' && typeof userVal !== 'string' ||
+            field.type === 'number' && typeof userVal !== 'number' ||
+            field.type === 'boolean' && typeof userVal !== 'boolean'
         ) {
             throw new ErrorForClient(`Invalid type for property '${prop}'`, 'invalid_type');
         }
 
-        toUpdate[field.name] = val;
+        toUpdate[field.name] = userVal;
     }
 
     return toUpdate;
@@ -161,6 +162,28 @@ const apiv1 = {
                 throw new ErrorForClient('Invalid login', 'bad_auth');
             }
         },
+        async register(apiCtx, userInfo) {
+            let existingUser = await dbUsersCol.findOne({name: userInfo.name});
+            if (existingUser) {
+                throw new ErrorForClient('Username is unavailable', 'username_unavailable');
+            }
+
+            let newVals = parseClientSourceValuesToDbValues(userInfo, {
+                name: { type: 'string', name: 'name', required: true },
+                password: { type: 'string', name: 'password', required: true },
+            });
+
+            let newUser = models.User({
+                _id: generateId(),
+                ...newVals,
+            });
+            await dbUsersCol.insertOne(newUser);
+
+            return {
+                id: newUser._id,
+                name: newUser.name,
+            };
+        },
     },
     account: {
         _meta: {
@@ -206,7 +229,7 @@ const apiv1 = {
                 throw new ErrorForClient('Unknown type of message source', 'unknown_source_type');
             }
 
-            let toUpdate = parseClientSourceValues(values, fieldValues);
+            let toUpdate = parseClientSourceValuesToDbValues(values, fieldValues);
             // Prepend the db doc field to each property
             for (let prop in toUpdate) {
                 toUpdate['sources.$.' + prop] = toUpdate[prop];
@@ -234,15 +257,16 @@ const apiv1 = {
                 throw new ErrorForClient('Unknown type of message source', 'unknown_source_type');
             }
 
-            let newSource = parseClientSourceValues(values, fieldValues);
-            if (Object.keys(newSource).length === 0) {
-                throw new ErrorForClient('Missing name for the new source', 'missing_params');
+            let newVals = parseClientSourceValuesToDbValues(values, fieldValues);
+            if (Object.keys(newVals).length === 0) {
+                throw new ErrorForClient('Missing parameters for the new source', 'missing_params');
             }
 
-            let newId = generateId();
-            newSource._id = newId;
-            newSource.name = name.trim();
-            newSource.imapUid = '';
+            let newSource = models.UserSource({
+                _id: generateId(),
+                name: name.trim(),
+                ...newVals,
+            });
 
             await dbUsersCol.updateOne(
                 {
@@ -251,7 +275,7 @@ const apiv1 = {
                 {$push: { sources: newSource } }
             );
 
-            return { id: newId };
+            return { id: newSource._id };
         },
 
         async delete(apiCtx, sourceId) {
@@ -313,22 +337,22 @@ const apiv1 = {
             let query = values.filter || '';
             let parsedQuery = parseQuery(query);
 
-            let newId = generateId();
+            let newLabel = models.UserLabel({
+                _id: generateId(),
+                name: labelName,
+                unread: 0,
+                filter: { raw: query, parsed: parsedQuery }
+            });
 
             await dbUsersCol.updateOne(
                 {_id: apiCtx.session.uid},
                 {
                     $addToSet: {
-                        labels: {
-                            _id: newId,
-                            name: labelName,
-                            unread: 0,
-                            filter: { raw: query, parsed: parsedQuery }
-                        },
+                        labels: newLabel,
                     },
                 }
             );
-            return {id: newId, name: labelName};
+            return {id: newLabel._id, name: labelName};
         },
         delete: async(apiCtx, labelId) => {
             await dbUsersCol.updateOne(
@@ -343,30 +367,6 @@ const apiv1 = {
     messages: {
         _meta: {
             runBefore: [requireAuth],
-        },
-        // TODO: should be "system" user only
-        ingest: async (apiCtx, incoming) => {
-            // TODO: validate the incoming message before inserting
-            let message = {
-                id: incoming.id,
-                threadId: incoming.threadId || '',
-                from: incoming.from, // 'some name <some@gmail.com>'
-                to: incoming.to, //['you@domain.com'],
-                cc: incoming.cc, //['you@domain.com'],
-                bcc: incoming.bcc, //['you@domain.com'],
-                subject: incoming.subject, //'RE: RE: FW: help pls',
-                bodyText: incoming.bodyText, //'wooo my body ' + i,
-                bodyHtml: incoming.bodyHtml, //'wooo my <b>body</b> ' + i,
-                labels: [
-                    1,
-                ],
-                recieved: incoming.recieved ? incoming.recieved : Date.now(),
-                read: incoming.read ? incoming.read : 0,
-                inReplyTo: incoming.inReplyTo || '',
-                raw: incoming.raw || '',
-            };
-            insertMessage(message);
-
         },
         // Get the latest threads, and all messages within each thread. size=the number of threads
         latest: async (apiCtx, labelIds, size=100) => {
